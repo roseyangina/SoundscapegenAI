@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  client:
+    build: 
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: soundscape-client
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+      - python_nlp
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: soundscape-server
+    ports:
+      - "3001:3001"
+    depends_on:
+      - python_nlp
+
+  python_nlp:
+    build:
+      context: ./nlp
+      dockerfile: Dockerfile
+    container_name: soundscape-python
+    ports:
+      - "3002:3002"
