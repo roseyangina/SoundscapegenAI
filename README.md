@@ -1,7 +1,30 @@
-You need python and node installed to use this.
+# SoundscapeGen
 
-When you have both, run setup.bat and it will install the dependencies (currently flask and express) for you
+A web application that generates soundscapes from natural language.
 
-To run it, open two command prompts and run `node express_backend.js` in one and `python python_backend.py` in the other
-To test what will happen when it's called by the server (will have to change because it currently accepts raw json rather than
-form data), use postman or curl (or whatever else you can use to hit a localhost http api endpoint) and send a request with Content-Type application/json and a body with an item called `str` that has a string. Right now the functionality isn't implemented so it just returns the unique words in the string, as a list.
+## Installation and Setup
+
+### 1. Install Docker
+Ensure you have [Docker installed](https://www.docker.com/products/docker-desktop).
+
+### 2. Clone the Repository
+```bash
+git clone https://github.com/Soundscapegen/project.git
+cd project
+```
+
+### 3. Start the Project
+```bash
+docker-compose up --build
+```
+This will automatically start:
+
+- **Frontend (Next.js)** -> `http://localhost:3000`
+- **Backend (Express.js)** -> `http://localhost:3001`
+- **NLP Service (Flask)** -> `http://localhost:3002`
+
+### 4. Stop the Project
+Press `CTRL + C` or run:
+```bash
+docker-compose down
+```
