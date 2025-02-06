@@ -4,7 +4,7 @@ On running docker-compose up –build in the root,
 it will take a few minutes as the pytorch package is large.
 
 After build is successful and docker is up, go to browser and run:
-[http://localhost:3000/]
+[http://localhost:3000/](http://localhost:3000/)
 
 You can test any sentence and it will extract some key words:
 For example: 'I would like a soothing piano track' , 'A futuristic soundscape with electronic beats.'
