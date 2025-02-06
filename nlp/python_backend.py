@@ -19,7 +19,7 @@ def keywords():
         keywords_result = extract_keywords(input_str)
 
         if not keywords_result:
-            return jsonify(success=False, message="Sorry, I didn't catch that. Could you describe it in a different way?"), 400
+            return jsonify(success=False, message="No keywords."), 400
 
         
         return jsonify(success=True, keywords=keywords_result), 200
