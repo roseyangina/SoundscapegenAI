@@ -11,8 +11,8 @@ export default function Home() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
-    setError(null);
 
+    try {
     const res = await fetch("http://localhost:3001/api/keywords", {
       method: 'POST',
       headers: {
@@ -23,20 +23,12 @@ export default function Home() {
 
     if (!res.ok) {
         throw new Error(`HTTP Error Status: ${res.status}`);
-      }
-
-    
-    const data: KeywordsResponse = await res.json().catch(() => {
-      throw new Error("Invalid JSON response from the server");
-    });
-
-    if (!data.keywords || !Array.isArray(data.keywords)) {
-      throw new Error("Unexpected response format: Missing 'keywords' array");
     }
+
+    const data: KeywordsResponse = await res.json();
     setKeywords(data.keywords); 
-    } catch (err: any) {
-      console.error("Error fetching data:", err.message);
-      setError(err.message || "An error occurred while fetching data");
+    } catch (err) {
+      console.error("Error fetching data:", (err as Error).message);
     }
   }
 
