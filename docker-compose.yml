@@ -20,7 +20,13 @@ services:
     ports:
       - "3001:3001"
     depends_on:
+      - postgres
       - python_nlp
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=soundscape_db
 
   python_nlp:
     build:
@@ -29,3 +35,19 @@ services:
     container_name: soundscape-python
     ports:
       - "3002:3002"
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: soundscape-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: soundscape_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/db/migrations/initial_schema.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  postgres_data:
