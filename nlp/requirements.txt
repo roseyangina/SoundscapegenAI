@@ -6,3 +6,4 @@ requests==2.28.1
 transformers==4.48.2
 sympy==1.13.1
 python-dotenv==1.0.1
+freesound_api==1.1.0.2

@@ -1,13 +1,16 @@
 "use client";
 import { useState } from "react";
 
+interface Sound {
+  sound_number: string;
+  name: string;
+  description: string;
+  sound_url: string;
+}
+
 export default function Home() {
   const [inputString, setInputString] = useState("");
-  const [keywords, setKeywords] = useState<string[]>([]);
-
-  interface KeywordsResponse {
-    keywords: string[];
-  }
+  const [response, setResponse] = useState<{ keywords?: string[]; sounds?: Sound[] } | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
@@ -25,8 +28,8 @@ export default function Home() {
         throw new Error(`HTTP Error Status: ${res.status}`);
     }
 
-    const data: KeywordsResponse = await res.json();
-    setKeywords(data.keywords); 
+    const data = await res.json();
+    setResponse(data); 
     } catch (err) {
       console.error("Error fetching data:", (err as Error).message);
     }
@@ -45,14 +48,9 @@ export default function Home() {
         />
         <button type="submit">Get Keywords</button>
       </form>
-      <div>
-        <h2>Keywords:</h2>
-        <ul>
-          {keywords.map((kw, idx) => (
-            <li key={idx}>{kw}</li>
-          ))}
-        </ul>
-      </div>
+
+        {/* Display JSON response of both Keywords and Sounds  */}
+        {response?.keywords?.length ? <pre>{JSON.stringify(response, null, 2)}</pre> : null}
     </div>
   );
 }

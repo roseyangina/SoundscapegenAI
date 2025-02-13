@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from nlp_model import extract_keywords
+from nlp_model import get_keywords
+from freesound import search_freesound
 
 app = Flask(__name__)
 CORS(app)
@@ -16,13 +17,31 @@ def keywords():
     
     try:
         # BERT-based function
-        keywords_result = extract_keywords(input_str)
+        keywords_result = get_keywords(input_str)
 
         if not keywords_result:
-            return jsonify(success=False, message="No keywords."), 400
-
+            return jsonify(success=False, message="No keywords extracted into flask python backend."), 400
         
-        return jsonify(success=True, keywords=keywords_result), 200
+        # Fetch sounds from FreeSound by keywords extracted
+        freesound_results = search_freesound(keywords_result)
+
+        if not freesound_results or 'results' not in freesound_results:
+            return jsonify(success=False, message="No sounds found.", keywords=keywords_result), 404
+
+        # Only top 6 sounds for the response
+        top_sounds = freesound_results["results"][:6]
+
+        # Formatting the response
+        sounds_info = []
+        for index, sound in enumerate(top_sounds, start=1):
+            sounds_info.append(({
+                "sound_number": f"Sound {index}",
+                "name": sound.get("name", "Unknown"),
+                "description": sound.get("description", "No description available"),
+                "sound_url": sound.get("download", "No URL provided")
+            }))
+    
+        return jsonify(success=True, keywords=keywords_result, sounds=sounds_info), 200
     except Exception as e:
         return jsonify(success=False, message=str(e)), 500
 
