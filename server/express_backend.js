@@ -43,7 +43,7 @@ app.post('/api/keywords', async (req, res) => {
     console.log(keywords)
     
     res.status(201).json(keywords)
-    return
+    //return
 })
 
 app.listen(port, '0.0.0.0', () => {

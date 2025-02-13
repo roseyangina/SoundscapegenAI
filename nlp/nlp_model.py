@@ -42,7 +42,7 @@ def merge_tokens(words):
     return final_keywords
 
 # Helper 2
-def preprocess_text(text):
+def preprocess_text(input_text):
     """
     Removes unnecessary phrases and punctuation, and expands sentence if its too short
     for BERT to recognize
@@ -53,7 +53,7 @@ def preprocess_text(text):
         "sound", "sounds", "music", "track"
     ]
 
-    cleaned_text = text.lower()
+    cleaned_text = input_text.lower()
 
     for phrase in NOISE_PHRASES:
         cleaned_text = cleaned_text.replace(phrase, "").strip()
@@ -68,42 +68,46 @@ def preprocess_text(text):
     return cleaned_text
 
 # Main
-def extract_keywords(text):
+def get_keywords(input_text):
+    print(f"Received input: {input_text}") 
     """
     Uses the DistilBERT-based pipeline to extract keywords from user input.
     """
 
     # 1: Preprocess the text
-    cleaned_text = preprocess_text(text)
+    cleaned_text = preprocess_text(input_text)
+    print(f"After preprocessing: {cleaned_text}")  # Debugging print
 
     # 2: Running the token classification pipeline on the preprocessed text
-    extracted_keywords_dict = pipe(cleaned_text)    # List of dictionaries containing extracted keywords
+    extracted_kw_dict = pipe(cleaned_text)    # List of dictionaries containing extracted keywords
+    print(f"Raw extracted keywords: {extracted_kw_dict}")
 
     # 3: Collecting the token 'word' fields in the list
-    keywords_scores_tuple = []  
-    for word_dict in extracted_keywords_dict:       
+    kw_scores_tuple = []  
+    for word_dict in extracted_kw_dict:       
         extracted_word = word_dict['word']          # Get the value of 'word' key
         confidence = word_dict['score']
-        keywords_scores_tuple.append((extracted_word, confidence))  
+        kw_scores_tuple.append((extracted_word, confidence))  
 
     # Sorting keywords by the confidence score (highest first)
-    keywords_scores_tuple.sort(key=lambda x: x[1], reverse=True)  
+    kw_scores_tuple.sort(key=lambda x: x[1], reverse=True)  
 
     # Extracting only the top 3 scored words (if more than 3 exist)
-    top_keywords = []  
-    for word_tuple in keywords_scores_tuple[:3]:  
-        top_keywords.append(word_tuple[0])
+    top_kw = []  
+    for word_tuple in kw_scores_tuple[:3]:  
+        top_kw.append(word_tuple[0])
 
     # 4: Merging subword tokens in the case of unrecognized words ('##' pieces)
-    final_keywords = merge_tokens(top_keywords)
+    final_keywords = merge_tokens(top_kw)
 
     # 5: Including predefined MUSIC_KEYWORDS if they appear in the original text
-    for word in text.split():
+    for word in input_text.split():
         word = word.lower()
         if word in MUSIC_KEYWORDS and word not in final_keywords:
             final_keywords.append(word)      
 
     #---------------------------- Further processing -----------------------------------------
+    
     # Remove words with length 2 or 3 only if there are at least 2 extracted keywords
     filtered_keywords = []
     if len(final_keywords) >= 2:
@@ -122,7 +126,7 @@ def extract_keywords(text):
 
     # Empty results (no keywords extracted)
     if not final_keywords:
-        print("No keywords found.")
+        print("Empty results in nlp_model. No final keywords found.")
         return []    
 
     # For logging purposes
