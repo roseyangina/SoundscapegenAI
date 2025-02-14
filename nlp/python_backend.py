@@ -6,6 +6,10 @@ from freesound import search_freesound
 app = Flask(__name__)
 CORS(app)
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "healthy"}), 200
+
 @app.route('/api/keywords', methods=['POST'])
 def keywords():
     data = request.get_json()
