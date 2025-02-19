@@ -12,7 +12,7 @@ const db = require('./db/db');
 app.use(express.json())
 app.use(cors())
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = new OAuth2Client("643417108125-92fhmqq0nafhdgd6d2juchkcrv3fos5d.apps.googleusercontent.com");
 
 // this exists to separate the client from the server and gateway so that processing can be handled intermediately
 // allows us to protect python/nlp side from invalid or malicious requests and to keep everything in one place
@@ -43,7 +43,7 @@ app.post("/api/auth/google", async (req, res) => {
     try {
       const ticket = await client.verifyIdToken({
         idToken: token,
-        audience: process.env.GOOGLE_CLIENT_ID,
+        audience: "643417108125-92fhmqq0nafhdgd6d2juchkcrv3fos5d.apps.googleusercontent.com",
       });
   
       const payload = ticket.getPayload();
