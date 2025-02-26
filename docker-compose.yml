@@ -32,6 +32,8 @@ services:
     build:
       context: ./nlp
       dockerfile: Dockerfile
+    environment:
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
     container_name: soundscape-python
     ports:
       - "3002:3002"
