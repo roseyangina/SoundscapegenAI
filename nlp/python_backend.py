@@ -20,15 +20,20 @@ def keywords():
     input_str = data['str']
     
     try:
-        # BERT-based function
-        keywords_result = get_keywords(input_str)
+        # Mistral-based function
+        keywords_result = get_keywords(input_str, min_keywords=6)
 
+        # fallback if no keywords found
         if not keywords_result:
-            return jsonify(success=False, message="No keywords extracted into flask python backend."), 400
-        
+            return jsonify(
+                success=True,
+                message="No keywords found, returning fallback.",
+                keywords=[],
+                sounds=[]
+            ), 200
+
         # Fetch sounds from FreeSound by keywords extracted
         freesound_results = search_freesound(keywords_result)
-
         if not freesound_results or 'results' not in freesound_results:
             return jsonify(success=False, message="No sounds found.", keywords=keywords_result), 404
 
@@ -38,15 +43,19 @@ def keywords():
         # Formatting the response
         sounds_info = []
         for index, sound in enumerate(top_sounds, start=1):
-            sounds_info.append(({
+            sounds_info.append({
                 "sound_number": f"Sound {index}",
                 "name": sound.get("name", "Unknown"),
                 "description": sound.get("description", "No description available"),
-                "sound_url": sound.get("download", "No URL provided")
-            }))
-    
+                "sound_url": sound.get("download", "No URL provided"),
+                "preview_url": sound.get("preview_url", ""),
+                "freesound_id": sound.get("id")
+            })
+
         return jsonify(success=True, keywords=keywords_result, sounds=sounds_info), 200
+
     except Exception as e:
+        print("Exception in /api/keywords:", e)
         return jsonify(success=False, message=str(e)), 500
 
 if __name__ == '__main__':

@@ -1,135 +1,70 @@
 import os
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # Suppress TensorFlow logging
-
 import re
-from transformers import pipeline, AutoTokenizer, AutoModelForTokenClassification
+import json
+from mistralai import Mistral
 
-# Load tokenizer and model
-tokenizer = AutoTokenizer.from_pretrained("ml6team/keyphrase-extraction-distilbert-inspec")
-model = AutoModelForTokenClassification.from_pretrained("ml6team/keyphrase-extraction-distilbert-inspec")
+API_KEY = os.getenv("MISTRAL_API_KEY")
+MODEL_NAME = "mistral-large-latest"
 
-pipe = pipeline("token-classification", model=model, tokenizer=tokenizer)
+mistral_client = Mistral(api_key=API_KEY)
 
-# Predefined music-related words that may not be part of bert model data
-MUSIC_KEYWORDS = {
-    "piano", "rain", "storm", "jazz", "soundscape", "guitar", "ocean", "waves",
-    "birds", "fireplace", "wind", "meditation", "flute", "cello", "nature",
-    "thunder", "thunderstorm", "river", "breeze", "forest", "drums", "whale", "harp", "choir",
-    "lo-fi", "electronic", "classical", "smooth", "relaxing", "ambient", "lofi", "hum",
-    "chill", "soft", "hiphop", "hip-hop", "hip hop", "rap", "rock", "metal"
-}
-
-# Helper 1
-def merge_tokens(words):
+def get_keywords(user_text: str, min_keywords: int = 6):
     """
-    Merges tokens/words that BERT doesn't recognize (subwords).
-    E.g. ['sp', '##ook', '##y'] -> ['spooky']
+    Calls Mistral to 'expand' or 'extrapolate' a list of relevant keywords for the user text.
+    Returns a Python list of keywords (strings).
     """
-    final_keywords = []
-    current_word = ""
-
-    for word in words:
-        if word.startswith("##"):
-            current_word += word[2:]
-        else:
-            if current_word:
-                final_keywords.append(current_word)
-            current_word = word
-
-    if current_word:
-        final_keywords.append(current_word)
-
-    return final_keywords
-
-# Helper 2
-def preprocess_text(input_text):
-    """
-    Removes unnecessary phrases and punctuation, and expands sentence if its too short
-    for BERT to recognize
-    """
-    NOISE_PHRASES = [
-        "i want", "i need", "i would like", "can you play", "play me", "give me", "soundscape",
-        "let me hear", "please play", "i'd like", "could you", "please", "of", "the",
-        "sound", "sounds", "music", "track"
-    ]
-
-    cleaned_text = input_text.lower()
-
-    for phrase in NOISE_PHRASES:
-        cleaned_text = cleaned_text.replace(phrase, "").strip()
-
-    # Remove punctuation
-    cleaned_text = re.sub(r"[^\w\s]", "", cleaned_text)
-
-    # If it's very short, expand for bert to better recognize key words
-    if len(cleaned_text.split()) <= 3:
-        cleaned_text = f"Give context on {cleaned_text}"
-
-    return cleaned_text
-
-# Main
-def get_keywords(input_text):
-    print(f"Received input: {input_text}") 
-    """
-    Uses the DistilBERT-based pipeline to extract keywords from user input.
-    """
-
-    # 1: Preprocess the text
-    cleaned_text = preprocess_text(input_text)
-    print(f"After preprocessing: {cleaned_text}")  # Debugging print
-
-    # 2: Running the token classification pipeline on the preprocessed text
-    extracted_kw_dict = pipe(cleaned_text)    # List of dictionaries containing extracted keywords
-    print(f"Raw extracted keywords: {extracted_kw_dict}")
-
-    # 3: Collecting the token 'word' fields in the list
-    kw_scores_tuple = []  
-    for word_dict in extracted_kw_dict:       
-        extracted_word = word_dict['word']          # Get the value of 'word' key
-        confidence = word_dict['score']
-        kw_scores_tuple.append((extracted_word, confidence))  
-
-    # Sorting keywords by the confidence score (highest first)
-    kw_scores_tuple.sort(key=lambda x: x[1], reverse=True)  
-
-    # Extracting only the top 3 scored words (if more than 3 exist)
-    top_kw = []  
-    for word_tuple in kw_scores_tuple[:3]:  
-        top_kw.append(word_tuple[0])
-
-    # 4: Merging subword tokens in the case of unrecognized words ('##' pieces)
-    final_keywords = merge_tokens(top_kw)
-
-    # 5: Including predefined MUSIC_KEYWORDS if they appear in the original text
-    for word in input_text.split():
-        word = word.lower()
-        if word in MUSIC_KEYWORDS and word not in final_keywords:
-            final_keywords.append(word)      
-
-    #---------------------------- Further processing -----------------------------------------
+    # A prompt instructing Mistral to output ONLY a JSON array of min_keywords keywords
+    prompt_str = f"""
+    You are a sound design keyword generator. I will give you a description, and you need to extract 
+    or generate relevant sound effect keywords that could be used to search a sound library.
     
-    # Remove words with length 2 or 3 only if there are at least 2 extracted keywords
-    filtered_keywords = []
-    if len(final_keywords) >= 2:
-        for word in final_keywords:
-            if len(word) > 3:
-                filtered_keywords.append(word)
-    else:
-        filtered_keywords = final_keywords  
+    Description: "{user_text}"
+    
+    Generate exactly {min_keywords} keywords related to sounds described. Format your response as ONLY a JSON 
+    array of strings. For example: ["spaceship hum", "engine rumble", "space atmosphere", "control panel beeps", 
+    "airlock sound", "cosmic radiation"]
+    
+    Important: Return ONLY the JSON array, no other text or explanation.
+    """.strip()
 
-    final_keywords = filtered_keywords
+    try:
+        response = mistral_client.chat.complete(
+            model=MODEL_NAME,
+            messages=[
+                {"role": "user", "content": prompt_str}
+            ],
+        )
 
-    # Only the top 3 keywords are returned (remove shortest word if more than 3)
-    while len(final_keywords) > 3:
-        shortest_word = min(final_keywords, key=len)
-        final_keywords.remove(shortest_word)
+        raw_text = response.choices[0].message.content.strip()
+        print(f"Mistral raw response: {raw_text}")  # Add debugging
+        
+        # Clean up response - sometimes models add markdown code blocks
+        if "```json" in raw_text:
+            raw_text = raw_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw_text:
+            raw_text = raw_text.split("```")[1].strip()
+            
+        # Try to parse JSON
+        try:
+            expansions = json.loads(raw_text)
+            if not isinstance(expansions, list):
+                print("Mistral returned valid JSON but not a list:", expansions)
+                return []
+                
+            expansions = [k.strip() for k in expansions if k.strip()]
+            print(f"Successfully extracted keywords: {expansions}")
+            return expansions
+            
+        except json.JSONDecodeError as e:
+            print(f"JSON parse error: {e}")
+            print("Raw text that failed parsing:", raw_text)
+            # If parsing fails, try a simple fallback (extract quoted terms)
+            fallback_keywords = re.findall(r'"([^"]+)"', raw_text)
+            if fallback_keywords and len(fallback_keywords) >= 3:
+                print(f"Using fallback extraction: {fallback_keywords}")
+                return fallback_keywords[:min_keywords]
+            return []
 
-    # Empty results (no keywords extracted)
-    if not final_keywords:
-        print("Empty results in nlp_model. No final keywords found.")
-        return []    
-
-    # For logging purposes
-    print(f"Searching for sounds related to {', '.join(final_keywords)}...")
-
-    return final_keywords
+    except Exception as e:
+        print("Error calling Mistral:", e)
+        return []
