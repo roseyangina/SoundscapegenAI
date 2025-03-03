@@ -21,11 +21,10 @@ def search_freesound(keywords, max_per_keyword=3):
         if not query:
             continue
         
-        url = "https://freesound.org/apiv2/search/text/"
+        url = f"https://freesound.org/apiv2/search/text/?token={FREESOUND_API_KEY}"
         params = {
             "query": query,
-            "fields": "name,description,download",
-            "token": FREESOUND_API_KEY,
+            "fields": "id,name,description,download,previews",
             "sort": "score" # select by score
         }
 
@@ -38,6 +37,14 @@ def search_freesound(keywords, max_per_keyword=3):
 
         data = response.json()
         results = data.get("results", [])
+
+        # Download and preview URL for each result
+        for result in results:
+            if 'download' in result:
+                result['download'] = f"{result['download']}?token={FREESOUND_API_KEY}"
+            
+            if 'previews' in result and 'preview-hq-mp3' in result['previews']:
+                result['preview_url'] = result['previews']['preview-hq-mp3']
         
         # Take top N results for each keyword (max_per_keyword)
         top_n = results[:max_per_keyword]

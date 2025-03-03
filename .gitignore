@@ -128,3 +128,14 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# sound server files
+server/public/sounds
+*.wav
+*.mp3
+*.ogg
+*.m4a
+*.wav
+*.mp3
+*.ogg
+*.m4a

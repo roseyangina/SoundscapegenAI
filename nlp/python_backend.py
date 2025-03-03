@@ -47,7 +47,9 @@ def keywords():
                 "sound_number": f"Sound {index}",
                 "name": sound.get("name", "Unknown"),
                 "description": sound.get("description", "No description available"),
-                "sound_url": sound.get("download", "No URL provided")
+                "sound_url": sound.get("download", "No URL provided"),
+                "preview_url": sound.get("preview_url", ""),
+                "freesound_id": sound.get("id")
             })
 
         return jsonify(success=True, keywords=keywords_result, sounds=sounds_info), 200
