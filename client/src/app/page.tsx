@@ -11,9 +11,11 @@ import About from "../../components/About/About";
 
 import { KeywordResponse, SoundscapeDetails, SoundscapeResponse } from "./types/soundscape";
 import { getKeywords, downloadSound, createSoundscape, getSoundscapeById } from "./services/soundscapeService";
-
+import { useRouter } from "next/navigation"; // Correct for App Router
 
 export default function Home() {
+  // Inside Home function
+  const router = useRouter();
   const [user, setUser] = useState(false);
 
   const [inputString, setInputString] = useState("");
@@ -25,15 +27,39 @@ export default function Home() {
   const [soundscapeDetails, setSoundscapeDetails] = useState<SoundscapeDetails | null>(null);
   const [isLoadingSoundscape, setIsLoadingSoundscape] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
+  
     try {
-      const data = await getKeywords(inputString);
-      setResponse(data);
-      setSoundscapeResult(null);
+      const response = await fetch("http://localhost:3001/api/keywords", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ str: inputString }),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+  
+      const data = await response.json();
+       // checking for keywords
+      console.log("Extracted Keywords:", data.keywords);
+      if (data?.sounds?.length) {
+        const extractedSounds = data.sounds.map(sound => sound.preview_url); // extract preview sound to route
+  
+    
+        console.log("Extracted Sound Paths:", extractedSounds); 
+        const invalidSounds = extractedSounds.filter(url => !url || url === ""); // identify sounds with missing or invalid URLs
+
+        if (invalidSounds.length > 0) {
+          console.warn("Some sounds are missing preview URLs:", invalidSounds);
+        }
+  
+        const soundsParam = encodeURIComponent(JSON.stringify(extractedSounds));
+        router.push(`/mixer?sounds=${soundsParam}`); // passing sounds to mixer
+      }
     } catch (err) {
-      console.error("Error fetching data:", (err as Error).message);
+      console.error("Error fetching sounds:", err);
     }
   }
 
@@ -95,40 +121,19 @@ export default function Home() {
       </div>
 
       <div className="search-box">
-        <input type="text" className="text" placeholder="Enter what you want to hear" />
-        <button>
-          {/* <Search className="search-icon" /> */}
+        <input
+          type="text"
+          value={inputString}
+          onChange={(e) => setInputString(e.target.value)}
+          placeholder="Enter what you want to hear"
+        />
+        <button onClick={handleSubmit}>
           <span className="search-icon">S</span>
-        </button>
-      </div>
-      
-      <div className="tabs">
-        <button 
-          onClick={() => setActiveTab("create")}
-          className={activeTab === "create" ? "active" : ""}
-        >
-          Create Soundscape
-        </button>
-        <button 
-          onClick={() => setActiveTab("view")}
-          className={activeTab === "view" ? "active" : ""}
-        >
-          View Soundscape
         </button>
       </div>
 
       {activeTab === "create" ? (
         <div>
-          <form onSubmit={handleSubmit}>
-            <input
-              type="text"
-              value={inputString}
-              onChange={e => setInputString(e.target.value)}
-              placeholder="Describe your soundscape..."
-            />
-            <button type="submit">Get Keywords</button>
-          </form>
-
           {response?.sounds && response.sounds.length > 0 && (
             <div>
               <h2>Found {response.sounds.length} sounds</h2>
@@ -149,7 +154,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Display JSON response of both Keywords and Sounds  */}
           {response?.keywords?.length ? <pre>{JSON.stringify(response, null, 2)}</pre> : null}
         </div>
       ) : (
@@ -158,7 +162,7 @@ export default function Home() {
             <input
               type="text"
               value={soundscapeId}
-              onChange={e => setSoundscapeId(e.target.value)}
+              onChange={(e) => setSoundscapeId(e.target.value)}
               placeholder="Enter Soundscape ID..."
             />
             <button type="submit" disabled={isLoadingSoundscape}>
@@ -172,7 +176,7 @@ export default function Home() {
               <p>Description: {soundscapeDetails.soundscape.description}</p>
               <h3>Sounds:</h3>
               <ul>
-                {soundscapeDetails.sounds.map(sound => (
+                {soundscapeDetails.sounds.map((sound) => (
                   <li key={sound.sound_id}>
                     <h4>{sound.name}</h4>
                     <p>{sound.description}</p>
@@ -192,10 +196,6 @@ export default function Home() {
           <h2>Recently Listen</h2>
           <div className="dash3"></div>
           <div className="listen-container">
-            <RecentlyCard />
-            <RecentlyCard />
-            <RecentlyCard />
-            <RecentlyCard />
             <RecentlyCard />
             <RecentlyCard />
             <RecentlyCard />
