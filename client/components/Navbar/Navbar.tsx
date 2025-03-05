@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 import React, {
     useState,
@@ -58,14 +59,14 @@ import React, {
   
           <nav className="navLinks">
             <ul>
-              <li>
-                <a href="/">Home</a>
+              <li> {/* home page is both / and /home */}
+                <Link href="/">Home</Link>
               </li>
               <li>
-                <a href="/popular">Popular</a>
+                <Link href="/popular">Popular</Link>
               </li>
               <li>
-                <a href="/about">About Us</a>
+                <Link href="/about">About Us</Link>
               </li>
             </ul>
           </nav>

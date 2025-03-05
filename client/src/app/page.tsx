@@ -27,9 +27,7 @@ export default function Home() {
   const [soundscapeDetails, setSoundscapeDetails] = useState<SoundscapeDetails | null>(null);
   const [isLoadingSoundscape, setIsLoadingSoundscape] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-  
+  async function handleSubmit(e: React.MouseEvent<HTMLButtonElement>) {
     try {
       const response = await fetch("http://localhost:3001/api/keywords", {
         method: "POST",
@@ -45,11 +43,11 @@ export default function Home() {
        // checking for keywords
       console.log("Extracted Keywords:", data.keywords);
       if (data?.sounds?.length) {
-        const extractedSounds = data.sounds.map(sound => sound.preview_url); // extract preview sound to route
+        const extractedSounds = data.sounds.map((sound: any) => sound.preview_url); // extract preview sound to route
   
     
         console.log("Extracted Sound Paths:", extractedSounds); 
-        const invalidSounds = extractedSounds.filter(url => !url || url === ""); // identify sounds with missing or invalid URLs
+        const invalidSounds = extractedSounds.filter((url: string) => !url || url === ""); // identify sounds with missing or invalid URLs
 
         if (invalidSounds.length > 0) {
           console.warn("Some sounds are missing preview URLs:", invalidSounds);
