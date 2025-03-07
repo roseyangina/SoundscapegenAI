@@ -1,12 +1,31 @@
 .mixer-container {
-    display: flex;
-    flex-direction: column;
-    background-color: white;
-    align-items: center;
-    gap: 16px;
-  }
-  .mixer-heading {
-    text-align: center;
-    margin-top: 20px;
-  }  
-  
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+.mixer-heading {
+  text-align: center;
+  margin: 30px 0;
+  color: #333;
+  font-size: 28px;
+}  
+
+.no-sounds-message {
+  padding: 40px;
+  text-align: center;
+  color: #666;
+  font-size: 16px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.audio-mixer {
+  width: 100%;
+}  

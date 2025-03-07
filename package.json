@@ -17,7 +17,8 @@
     "pg-pool": "^3.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "redis": "^4.7.0"
+    "redis": "^4.7.0",
+    "tone": "^15.0.4"
   },
   "devDependencies": {
     "@types/react": "^19.0.8",
