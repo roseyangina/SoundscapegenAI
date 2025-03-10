@@ -30,6 +30,33 @@ const getPlayer = (
   return player;
 };
 
+// Analyzes audio buffer to determine its peak amplitude for audio normalization
+const analyzeAudioLevel = (buffer: AudioBuffer): number => {
+  const channelData = buffer.getChannelData(0);
+  let max = 0;
+  
+  for (let i = 0; i < channelData.length; i++) { // Iterate through the buffer to find the maximum amplitude
+    const absValue = Math.abs(channelData[i]);
+    if (absValue > max) {
+      max = absValue;
+    }
+  }
+  
+  // Convert to dB (using 1.0 as reference) and avoid log(0) by using a small value for silent tracks
+  const dbValue = 20 * Math.log10(Math.max(max, 0.0001));
+  return Math.round(dbValue);
+};
+
+// Normalization of audio levels to a target level around -12dB
+const calculateNormalizedVolume = (peakDb: number): number => {
+  const targetDb = -12;
+
+  let adjustment = targetDb - peakDb;
+  adjustment = Math.max(-20, Math.min(18, adjustment));
+  
+  return Math.round(adjustment);
+};
+
 const AudioMixer: React.FC<AudioMixerProps> = ({ soundUrls }) => {
   const [tracks, setTracks] = useState<AudioTrack[]>([]);
   const [masterVolume, setMasterVolume] = useState<number>(0);
@@ -52,9 +79,33 @@ const AudioMixer: React.FC<AudioMixerProps> = ({ soundUrls }) => {
       masterVolumeNode.current.connect(analyzerRef.current);
 
       const newTracks: AudioTrack[] = soundUrls.map((url, index) => {
-        const player = getPlayer(url, index, () =>
-          setLoadedCount((prev) => prev + 1)
-        );
+        const player = getPlayer(url, index, () => {
+          try {
+            const playerAny = player as any;
+            if (playerAny.buffer && playerAny.buffer.get) { // checking buffer is loaded
+              const buffer = playerAny.buffer.get();
+              if (buffer) {
+                const peakDb = analyzeAudioLevel(buffer); // analyze audio level
+                const normalizedVolume = calculateNormalizedVolume(peakDb); // normalize volume
+                
+                setTracks(prev => 
+                  prev.map(track => {
+                    if (track.id === index) {
+                      track.volume.volume.value = normalizedVolume;
+                      return { ...track, volumeLevel: normalizedVolume };
+                    }
+                    return track;
+                  })
+                );
+              }
+            }
+          } catch (error) {
+            console.error("Error analyzing audio:", error);
+          }
+          
+          setLoadedCount((prev) => prev + 1);
+        });
+        
         const panner = new Tone.Panner(0);
         const volume = new Tone.Volume(0);
 
@@ -195,8 +246,9 @@ const AudioMixer: React.FC<AudioMixerProps> = ({ soundUrls }) => {
     setTracks((prev) =>
       prev.map((track) => {
         if (track.id === trackId) {
-          track.volume.volume.value = value;
-          return { ...track, volumeLevel: value };
+          const roundedValue = Math.round(value);
+          track.volume.volume.value = roundedValue;
+          return { ...track, volumeLevel: roundedValue };
         }
         return track;
       })
@@ -217,9 +269,10 @@ const AudioMixer: React.FC<AudioMixerProps> = ({ soundUrls }) => {
 
   const handleMasterVolumeChange = (value: number) => { // handle change in master volume
     if (masterVolumeNode.current) {
-      masterVolumeNode.current.volume.value = value;
+      const roundedValue = Math.round(value);
+      masterVolumeNode.current.volume.value = roundedValue;
+      setMasterVolume(roundedValue);
     }
-    setMasterVolume(value);
   };
 
   const playAll = async () => { // play all tracks at once
@@ -292,8 +345,8 @@ const AudioMixer: React.FC<AudioMixerProps> = ({ soundUrls }) => {
             <input
               type="range"
               min="-60"
-              max="0"
-              step="1"
+              max="18"
+              step="0.5"
               value={masterVolume}
               onChange={(e) => handleMasterVolumeChange(Number(e.target.value))}
               className="master-volume-slider"
@@ -333,8 +386,8 @@ const AudioMixer: React.FC<AudioMixerProps> = ({ soundUrls }) => {
                     <input
                       type="range"
                       min="-60"
-                      max="0"
-                      step="1"
+                      max="18"
+                      step="0.5"
                       value={track.volumeLevel}
                       onChange={(e) =>
                         handleVolumeChange(track.id, Number(e.target.value))
