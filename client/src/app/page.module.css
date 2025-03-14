@@ -166,3 +166,36 @@ a.secondary {
     filter: invert();
   }
 }
+
+.soundscape-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.view-soundscape-button,
+.edit-soundscape-button {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.view-soundscape-button {
+  background: linear-gradient(180deg, #F14A21 0%, #F4671F 75%, #F7861C 100%);
+  color: white;
+}
+
+.edit-soundscape-button {
+  background: white;
+  color: #F4671F;
+  border: 2px solid #F4671F;
+}
+
+.view-soundscape-button:hover,
+.edit-soundscape-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}

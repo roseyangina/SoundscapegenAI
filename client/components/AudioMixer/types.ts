@@ -16,4 +16,8 @@ export interface AudioTrack {
 // An array of sound URLs is passed in as props to the AudioMixer component
 export interface AudioMixerProps {
   soundUrls: string[];
+  soundIds?: number[];
+  initialVolumes?: number[];
+  initialPans?: number[];
+  readOnly?: boolean;
 } 

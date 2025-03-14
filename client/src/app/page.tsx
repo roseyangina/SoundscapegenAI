@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 
 // import { Search, AudioLines, SlidersHorizontal } from "lucide-react";
 
@@ -44,9 +45,10 @@ export default function Home() {
       console.log("Extracted Keywords:", data.keywords);
       if (data?.sounds?.length) {
         const extractedSounds = data.sounds.map((sound: any) => sound.preview_url); // extract preview sound to route
-  
+        const extractedSoundIds = data.sounds.map((sound: any) => sound.freesound_id || 0); // extract sound ids to route
     
         console.log("Extracted Sound Paths:", extractedSounds); 
+        console.log("Extracted Sound IDs:", extractedSoundIds);
         const invalidSounds = extractedSounds.filter((url: string) => !url || url === ""); // identify sounds with missing or invalid URLs
 
         if (invalidSounds.length > 0) {
@@ -54,7 +56,10 @@ export default function Home() {
         }
   
         const soundsParam = encodeURIComponent(JSON.stringify(extractedSounds));
-        router.push(`/mixer?sounds=${soundsParam}`); // passing sounds to mixer
+        const soundIdsParam = encodeURIComponent(JSON.stringify(extractedSoundIds));
+        
+        // Pass both to the mixer page to create a soundscape
+        router.push(`/mixer?sounds=${soundsParam}&soundIds=${soundIdsParam}`);
       }
     } catch (err) {
       console.error("Error fetching sounds:", err);
@@ -149,6 +154,20 @@ export default function Home() {
               <h2>Soundscape Created!</h2>
               <p>Name: {soundscapeResult.soundscape.name}</p>
               <p>ID: {soundscapeResult.soundscape.soundscape_id}</p>
+              <div className="soundscape-actions">
+                <Link 
+                  href={`/soundscape/${soundscapeResult.soundscape.soundscape_id}`}
+                  className="view-soundscape-button"
+                >
+                  View Soundscape
+                </Link>
+                <Link 
+                  href={`/mixer?soundscapeId=${soundscapeResult.soundscape.soundscape_id}`}
+                  className="edit-soundscape-button"
+                >
+                  Open in Mixer
+                </Link>
+              </div>
             </div>
           )}
 

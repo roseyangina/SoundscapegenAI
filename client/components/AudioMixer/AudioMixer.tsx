@@ -4,6 +4,9 @@ import React, { useEffect, useState, useRef } from "react";
 import * as Tone from "tone";
 import "./AudioMixer.css";
 import { AudioTrack, AudioMixerProps } from "./types";
+import { createSoundscape } from "../../src/app/services/soundscapeService";
+import { SoundscapeResponse, Sound } from "../../src/app/types/soundscape";
+import { downloadSound } from "../../src/app/services/soundscapeService";
 
 // We create a cache to store Tone.Player instances keyed by their URL. This is to ensure that each sound loads exactly once
 const playerCache = new Map<string, Tone.Player>();
@@ -57,11 +60,22 @@ const calculateNormalizedVolume = (peakDb: number): number => {
   return Math.round(adjustment);
 };
 
-const AudioMixer: React.FC<AudioMixerProps> = ({ soundUrls }) => {
+const AudioMixer: React.FC<AudioMixerProps> = ({ 
+  soundUrls, 
+  soundIds = [], 
+  initialVolumes = [], 
+  initialPans = [],
+  readOnly = false
+}) => {
   const [tracks, setTracks] = useState<AudioTrack[]>([]);
   const [masterVolume, setMasterVolume] = useState<number>(0);
   const [loadedCount, setLoadedCount] = useState<number>(0);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [showSaveModal, setShowSaveModal] = useState<boolean>(false);
+  const [soundscapeName, setSoundscapeName] = useState<string>("");
+  const [soundscapeDescription, setSoundscapeDescription] = useState<string>("");
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveSuccess, setSaveSuccess] = useState<SoundscapeResponse | null>(null);
   const didInitialize = useRef(false);
   const masterVolumeNode = useRef<Tone.Volume | null>(null);
   const analyzerRef = useRef<Tone.Analyser | null>(null);
@@ -79,24 +93,31 @@ const AudioMixer: React.FC<AudioMixerProps> = ({ soundUrls }) => {
       masterVolumeNode.current.connect(analyzerRef.current);
 
       const newTracks: AudioTrack[] = soundUrls.map((url, index) => {
+        // get initial volume and pan values if available
+        const initialVolume = initialVolumes[index] !== undefined ? initialVolumes[index] : 0;
+        const initialPan = initialPans[index] !== undefined ? initialPans[index] : 0;
+        
         const player = getPlayer(url, index, () => {
           try {
             const playerAny = player as any;
             if (playerAny.buffer && playerAny.buffer.get) { // checking buffer is loaded
               const buffer = playerAny.buffer.get();
               if (buffer) {
-                const peakDb = analyzeAudioLevel(buffer); // analyze audio level
-                const normalizedVolume = calculateNormalizedVolume(peakDb); // normalize volume
-                
-                setTracks(prev => 
-                  prev.map(track => {
-                    if (track.id === index) {
-                      track.volume.volume.value = normalizedVolume;
-                      return { ...track, volumeLevel: normalizedVolume };
-                    }
-                    return track;
-                  })
-                );
+                // analyze when initival vol is not set
+                if (initialVolumes[index] === undefined) {
+                  const peakDb = analyzeAudioLevel(buffer); // analyze audio level
+                  const normalizedVolume = calculateNormalizedVolume(peakDb); // normalize volume
+                  
+                  setTracks(prev => 
+                    prev.map(track => {
+                      if (track.id === index) {
+                        track.volume.volume.value = normalizedVolume;
+                        return { ...track, volumeLevel: normalizedVolume };
+                      }
+                      return track;
+                    })
+                  );
+                }
               }
             }
           } catch (error) {
@@ -106,8 +127,8 @@ const AudioMixer: React.FC<AudioMixerProps> = ({ soundUrls }) => {
           setLoadedCount((prev) => prev + 1);
         });
         
-        const panner = new Tone.Panner(0);
-        const volume = new Tone.Volume(0);
+        const panner = new Tone.Panner(initialPan);
+        const volume = new Tone.Volume(initialVolume);
 
         player.connect(panner);
         panner.connect(volume);
@@ -120,8 +141,8 @@ const AudioMixer: React.FC<AudioMixerProps> = ({ soundUrls }) => {
           panner,
           volume,
           isPlaying: false,
-          volumeLevel: 0,
-          panValue: 0,
+          volumeLevel: initialVolume,
+          panValue: initialPan,
           pendingStartTimer: null,
         };
       });
@@ -140,7 +161,7 @@ const AudioMixer: React.FC<AudioMixerProps> = ({ soundUrls }) => {
       analyzerRef.current?.dispose();
       didInitialize.current = false;
     };
-  }, [soundUrls]);
+  }, [soundUrls, initialVolumes, initialPans]);
   useEffect(() => { // All tracks loaded, set isLoaded to true so mixer can render
     if (loadedCount >= soundUrls.length && soundUrls.length > 0) {
       setIsLoaded(true);
@@ -318,6 +339,85 @@ const AudioMixer: React.FC<AudioMixerProps> = ({ soundUrls }) => {
     });
   };
 
+  const handleFinalize = () => {
+    setShowSaveModal(true);
+  };
+
+  const handleSaveSoundscape = async () => {
+    if (!soundscapeName.trim()) {
+      alert("Please enter a name for your soundscape");
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveSuccess(null);
+
+    try { // check if all sounds are downloaded
+      const downloadPromises = soundUrls.map(async (url, index) => {
+        const soundObj: Sound = {
+          sound_number: String(index),
+          name: `Track ${index + 1}`,
+          description: `Sound from ${url}`,
+          sound_url: url,
+          preview_url: url,
+          freesound_id: String(soundIds[index] || '0')
+        };
+        
+        try { // download and return the sound
+          const downloadResult = await downloadSound(soundObj);
+          return {
+            original_id: soundIds[index] || 0,
+            downloaded_id: downloadResult.sound.sound_id,
+            volume: tracks[index].volumeLevel,
+            pan: tracks[index].panValue
+          };
+        } catch (error) {
+          console.error(`Error downloading sound ${index}:`, error);
+          return {
+            original_id: soundIds[index] || 0,
+            downloaded_id: soundIds[index] || 0,
+            volume: tracks[index].volumeLevel,
+            pan: tracks[index].panValue
+          };
+        }
+      });
+      
+      // wait for downloads to complete before creating soundscape
+      const downloadedSounds = await Promise.all(downloadPromises);
+      
+      // use the downloaded sound IDs for creating the soundscape
+      const soundsWithSettings = downloadedSounds.map(result => ({
+        sound_id: result.downloaded_id,
+        volume: result.volume,
+        pan: result.pan
+      }));
+
+      // call the soundscape service to save the soundscape
+      const result = await createSoundscape(
+        soundscapeName,
+        soundscapeDescription,
+        soundsWithSettings
+      );
+      
+      console.log('Soundscape saved successfully:', result);
+      setSaveSuccess(result);
+      
+      // don't close the modal automatically - let the user see the success message and ID
+    } catch (error) {
+      console.error('Error saving soundscape:', error);
+      setSaveSuccess(null);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelSave = () => {
+    setShowSaveModal(false);
+    setSoundscapeName("");
+    setSoundscapeDescription("");
+    setSaveSuccess(null);
+  };
+
   if (!isLoaded) { // draw loading spinner until all tracks are loaded
     return (
       <div className="loader-container">
@@ -361,6 +461,11 @@ const AudioMixer: React.FC<AudioMixerProps> = ({ soundUrls }) => {
             <button className="transport-button stop-all" onClick={stopAll}>
               Stop All
             </button>
+            {!readOnly && (
+              <button className="transport-button finalize" onClick={handleFinalize}>
+                Finalize Soundscape
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -423,6 +528,118 @@ const AudioMixer: React.FC<AudioMixerProps> = ({ soundUrls }) => {
           </div>
         ))}
       </div>
+
+      {/* Save Soundscape Modal - Only show in edit mode */}
+      {!readOnly && showSaveModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Save Your Soundscape</h2>
+            
+            {saveSuccess === null ? (
+              <>
+                <div className="form-group">
+                  <label htmlFor="soundscape-name">Name</label>
+                  <input
+                    id="soundscape-name"
+                    type="text"
+                    value={soundscapeName}
+                    onChange={(e) => setSoundscapeName(e.target.value)}
+                    placeholder="Enter a name for your soundscape"
+                    disabled={isSaving}
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="soundscape-description">Description (optional)</label>
+                  <textarea
+                    id="soundscape-description"
+                    value={soundscapeDescription}
+                    onChange={(e) => setSoundscapeDescription(e.target.value)}
+                    placeholder="Describe your soundscape"
+                    disabled={isSaving}
+                  />
+                </div>
+                
+                <div className="modal-actions">
+                  <button 
+                    className="modal-button cancel" 
+                    onClick={handleCancelSave}
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="modal-button save" 
+                    onClick={handleSaveSoundscape}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Saving...' : 'Save Soundscape'}
+                  </button>
+                </div>
+              </>
+            ) : saveSuccess ? (
+              <div className="success-message">
+                <p>Soundscape saved successfully!</p>
+                {saveSuccess.soundscape && (
+                  <div className="soundscape-info">
+                    <p>Soundscape ID: <strong>{saveSuccess.soundscape.soundscape_id}</strong></p>
+                    <p>You can access your soundscape at:</p>
+                    <div className="soundscape-link">
+                      <a 
+                        href={`/soundscape/${saveSuccess.soundscape.soundscape_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {window.location.origin}/soundscape/{saveSuccess.soundscape.soundscape_id}
+                      </a>
+                      <button 
+                        className="copy-button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(
+                            `${window.location.origin}/soundscape/${saveSuccess.soundscape.soundscape_id}`
+                          );
+                          alert('Link copied to clipboard!');
+                        }}
+                      >
+                        Copy
+                      </button>
+                    </div>
+                    <div className="modal-actions">
+                      <button 
+                        className="modal-button view" 
+                        onClick={() => {
+                          window.open(
+                            `/soundscape/${saveSuccess.soundscape.soundscape_id}`,
+                            '_blank'
+                          );
+                        }}
+                      >
+                        View Soundscape
+                      </button>
+                      <button 
+                        className="modal-button close" 
+                        onClick={handleCancelSave}
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="error-message">
+                <p>Failed to save soundscape. Please try again.</p>
+                <button 
+                  className="modal-button retry" 
+                  onClick={() => setSaveSuccess(null)}
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
