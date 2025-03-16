@@ -37,7 +37,7 @@ const Mixer = () => {
             </div>
           ))
         ) : (
-          <p>Loading sounds...</p> //replzce with loading spinner react icon
+          <p>Loading sounds...</p> //replace with loading spinner react icon
         )}
       </div>
     </div>

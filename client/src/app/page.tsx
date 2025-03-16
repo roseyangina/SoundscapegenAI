@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // import { Search, AudioLines, SlidersHorizontal } from "lucide-react";
 
@@ -26,6 +26,45 @@ export default function Home() {
   const [soundscapeId, setSoundscapeId] = useState("");
   const [soundscapeDetails, setSoundscapeDetails] = useState<SoundscapeDetails | null>(null);
   const [isLoadingSoundscape, setIsLoadingSoundscape] = useState(false);
+
+  // ****New state for homepage sounds:***
+  const [homepageSounds, setHomepageSounds] = useState<any[]>([]);
+  // Fetch homepage sounds when component mounts:
+  useEffect(() => {
+    async function fetchHomepageSounds() {
+      try {
+        const res = await fetch("http://localhost:3001/api/homepage-sounds");
+        if (!res.ok) {
+          throw new Error("Failed to fetch homepage sounds");
+        }
+        const data = await res.json();
+        if (data.success) {
+          setHomepageSounds(data.sounds);
+        }
+      } catch (error) {
+        console.error("Error fetching homepage sounds:", error);
+      }
+    }
+    fetchHomepageSounds();
+  }, []);
+
+  async function fetchHomepageSounds() {
+    try {
+      const res = await fetch("http://localhost:3001/api/homepage-sounds");
+      console.log("Response status:", res.status);
+      const text = await res.text();
+      console.log("Response text:", text);
+      if (!res.ok) {
+        throw new Error("Failed to fetch homepage sounds");
+      }
+      const data = JSON.parse(text);
+      if (data.success) {
+        setHomepageSounds(data.sounds);
+      }
+    } catch (error) {
+      console.error("Error fetching homepage sounds:", error);
+    }
+  }  
 
   async function handleSubmit(e: React.MouseEvent<HTMLButtonElement>) {
     try {
@@ -201,6 +240,8 @@ export default function Home() {
         </div>
       )}
 
+
+      {/* ------------------ Updated Popular Sounds Section ------------------ */}
       <div className="popular">
         <h2>Popular Sounds</h2>
         <div className="dash3"></div>
@@ -213,19 +254,25 @@ export default function Home() {
                 <p className="chosen">Nature</p>
                 <p className="chosen">Ocean Waves</p>
               </div>
-              {/* <SlidersHorizontal className="filterIcon" /> */}
               <span className="filterIcon">I</span>
             </div>
             <div className="tracks">
-              <TrackCard />
-              <TrackCard />
-              <TrackCard />
-              <TrackCard />
-              <TrackCard />
+              {homepageSounds.map((sound, index) => (
+                <TrackCard
+                  key={index}
+                  imageUrl={sound.image_url || "/spaceshipFlying.jpg"}
+                  altText={sound.name}
+                  name={sound.name}
+                  description={sound.description}
+                  previewUrl={sound.preview_url}
+                  />
+                ))
+              }
             </div>
           </div>
         </div>
       </div>
+      {/* --------------------------------------------------------------------- */}
 
       <About />
     </div>
