@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 
 const Mixer = () => {
   const searchParams = useSearchParams(); //get url parameters
-  const [sounds, setSounds] = useState<string[]>([]);
+  const [sounds, setSounds] = useState<Array<{url: string, name: string}>>([]);
   const [user, setUser] = useState(false);
   useEffect(() => {
     const soundsQueryParam = searchParams.get("sounds"); //get sounds from the urls
@@ -16,7 +16,17 @@ const Mixer = () => {
       try {
         const parsedSounds = JSON.parse(decodeURIComponent(soundsQueryParam)); // decode and parse sound urls
         console.log("Loaded Sounds:", parsedSounds); 
-        setSounds(parsedSounds.filter((sound: string) => sound)); // store sounds without null values
+        // Convert to array with URL and name if it's just an array of strings
+        const formattedSounds = Array.isArray(parsedSounds) 
+          ? parsedSounds
+              .filter((sound: string | {url: string, name: string}) => sound)
+              .map((sound: string | {url: string, name: string}) => {
+                return typeof sound === 'string' 
+                  ? {url: sound, name: `Sound ${sounds.length + 1}`} 
+                  : sound;
+              })
+          : [];
+        setSounds(formattedSounds);
       } catch (err) {
         console.error("Error loading sound data:", err);
       }
@@ -32,8 +42,8 @@ const Mixer = () => {
         {sounds.length > 0 ? (
           sounds.map((sound, index) => (
             <div key={index} className="sound-item">
-              <h3>Sound {index + 1}</h3>
-              <audio controls src={sound || ""} />
+              <h3>{sound.name}</h3>
+              <audio controls src={sound.url || ""} />
             </div>
           ))
         ) : (

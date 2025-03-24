@@ -82,11 +82,14 @@ export default function Home() {
        // checking for keywords
       console.log("Extracted Keywords:", data.keywords);
       if (data?.sounds?.length) {
-        const extractedSounds = data.sounds.map((sound: any) => sound.preview_url); // extract preview sound to route
+        // Pass both URL and name to mixer
+        const extractedSounds = data.sounds.map((sound: any) => ({
+          url: sound.preview_url,
+          name: sound.name
+        }));
   
-    
-        console.log("Extracted Sound Paths:", extractedSounds); 
-        const invalidSounds = extractedSounds.filter((url: string) => !url || url === ""); // identify sounds with missing or invalid URLs
+        console.log("Extracted Sounds:", extractedSounds); 
+        const invalidSounds = extractedSounds.filter((sound: {url: string, name: string}) => !sound.url || sound.url === "");
 
         if (invalidSounds.length > 0) {
           console.warn("Some sounds are missing preview URLs:", invalidSounds);
