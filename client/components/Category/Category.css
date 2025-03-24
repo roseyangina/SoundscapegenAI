@@ -17,7 +17,6 @@
     border-radius: 2px;
     cursor: pointer;
     transition: all 0.3s ease 0s;
-
 }
 
 .category-button:hover {
@@ -38,16 +37,27 @@
     font-weight: 500;
     font-family: Poppins;
     margin-top: 5px;
+    padding-left: 10px;
 }
 
 .subcategory ul li {
-    transition: none;
-    margin-bottom: 4px;
+    transition: all 0.2s ease;
+    margin-bottom: 8px;
     cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 4px;
+    position: relative;
 }
 
 .subcategory ul li:hover {
+    color: #F4671F;
+    background-color: #f9f9f9;
+}
+
+.subcategory-button.selected {
+    color: #F4671F !important;
     font-weight: 700;
-    color:#F4671F;
+    border-left: 3px solid #F4671F;
+    background-color: #FAF0ED;
 }
 

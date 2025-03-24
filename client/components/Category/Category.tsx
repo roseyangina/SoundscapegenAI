@@ -5,12 +5,27 @@ import './Category.css';
 
 type CategoryType = 'nature' | 'urban' | 'scifi' | 'fantasy';
 
-const Category = () => {
+type SubcategoryData = {
+  [key in CategoryType]: string[];
+};
+
+interface CategoryProps {
+  onCategorySelect?: (category: string) => void;
+  selectedCategories: string[];
+}
+
+const Category: React.FC<CategoryProps> = ({ onCategorySelect, selectedCategories }) => {
   const [showNature, setShowNature] = useState<boolean>(false);
   const [showUrban, setShowUrban] = useState<boolean>(false);
   const [showScifi, setShowScifi] = useState<boolean>(false);
   const [showFantasy, setShowFantasy] = useState<boolean>(false);
 
+  const subcategories: SubcategoryData = {
+    nature: ['Ocean Waves', 'Forest', 'Rainfall', 'Wind', 'Birds', 'Waterfall'],
+    urban: ['City Traffic', 'Café', 'Subway', 'Construction', 'Crowd', 'Office'],
+    scifi: ['Spaceship', 'Alien World', 'Computer', 'Laser', 'Robotics', 'Warp Drive'],
+    fantasy: ['Magic', 'Dragons', 'Castle', 'Mystical Forest', 'Medieval Town', 'Crystal Cave']
+  };
 
   const toggleSubcategories = (category: CategoryType) => {
     if (category === 'nature') {
@@ -21,6 +36,12 @@ const Category = () => {
       setShowScifi(!showScifi);
     } else if (category === 'fantasy') {
       setShowFantasy(!showFantasy);
+    }
+  };
+
+  const handleSubcategoryClick = (subcategory: string) => {
+    if (onCategorySelect) {
+      onCategorySelect(subcategory);
     }
   };
 
@@ -36,12 +57,15 @@ const Category = () => {
         {showNature && (
           <div className="subcategory" id="nature-sub">
             <ul>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
+              {subcategories.nature.map((item, index) => (
+                <li 
+                  key={`nature-${index}`} 
+                  className={`subcategory-button ${selectedCategories.includes(item) ? 'selected' : ''}`}
+                  onClick={() => handleSubcategoryClick(item)}
+                >
+                  {item}
+                </li>
+              ))}
             </ul>
           </div>
         )}
@@ -57,12 +81,15 @@ const Category = () => {
         {showUrban && (
           <div className="subcategory" id="urban-sub">
             <ul>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
+              {subcategories.urban.map((item, index) => (
+                <li 
+                  key={`urban-${index}`} 
+                  className={`subcategory-button ${selectedCategories.includes(item) ? 'selected' : ''}`}
+                  onClick={() => handleSubcategoryClick(item)}
+                >
+                  {item}
+                </li>
+              ))}
             </ul>
           </div>
         )}
@@ -78,12 +105,15 @@ const Category = () => {
         {showScifi && (
           <div className="subcategory" id="scifi-sub">
             <ul>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
+              {subcategories.scifi.map((item, index) => (
+                <li 
+                  key={`scifi-${index}`} 
+                  className={`subcategory-button ${selectedCategories.includes(item) ? 'selected' : ''}`}
+                  onClick={() => handleSubcategoryClick(item)}
+                >
+                  {item}
+                </li>
+              ))}
             </ul>
           </div>
         )}
@@ -99,12 +129,15 @@ const Category = () => {
         {showFantasy && (
           <div className="subcategory" id="fantasy-sub">
             <ul>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
-              <li className="subcategory-button">Ocean Waves</li>
+              {subcategories.fantasy.map((item, index) => (
+                <li 
+                  key={`fantasy-${index}`} 
+                  className={`subcategory-button ${selectedCategories.includes(item) ? 'selected' : ''}`}
+                  onClick={() => handleSubcategoryClick(item)}
+                >
+                  {item}
+                </li>
+              ))}
             </ul>
           </div>
         )}

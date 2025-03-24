@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { AiSearch02Icon } from "@hugeicons/core-free-icons";
 
 // import { Search, AudioLines, SlidersHorizontal } from "lucide-react";
 
@@ -26,6 +28,7 @@ export default function Home() {
   const [soundscapeId, setSoundscapeId] = useState("");
   const [soundscapeDetails, setSoundscapeDetails] = useState<SoundscapeDetails | null>(null);
   const [isLoadingSoundscape, setIsLoadingSoundscape] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // ****New state for homepage sounds:***
   const [homepageSounds, setHomepageSounds] = useState<any[]>([]);
@@ -147,6 +150,29 @@ export default function Home() {
     }
   }
 
+  // Handle category selection
+  const handleCategorySelect = (category: string) => {
+    if (selectedCategories.includes(category)) {
+      setSelectedCategories(selectedCategories.filter(cat => cat !== category));
+    } else {
+      setSelectedCategories([...selectedCategories, category]);
+    }
+  };
+
+  // Filter sounds based on selected categories
+  // Need to add fetching from backend in future
+  const filteredSounds = homepageSounds.filter(sound => {
+    if (selectedCategories.length === 0) return true;
+    
+    // TODO: Add checking sound tags
+    const soundTags = sound.tags || [];
+    return selectedCategories.some(category => 
+      soundTags.includes(category) || 
+      sound.name?.toLowerCase().includes(category.toLowerCase()) ||
+      sound.description?.toLowerCase().includes(category.toLowerCase())
+    );
+  });
+
   return (
     <div>
       <Navbar user={user} setUser={setUser} />
@@ -165,10 +191,15 @@ export default function Home() {
           type="text"
           value={inputString}
           onChange={(e) => setInputString(e.target.value)}
-          placeholder="Enter what you want to hear"
+          placeholder="Describe a soundscape to generate (e.g., rainy forest, busy cafe)"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && inputString.trim()) {
+              handleSubmit(e as any);
+            }
+          }}
         />
         <button onClick={handleSubmit}>
-          <span className="search-icon">S</span>
+          <HugeiconsIcon icon={AiSearch02Icon} size={24} className="search-icon" />
         </button>
       </div>
 
@@ -250,17 +281,48 @@ export default function Home() {
         <div className="dash3"></div>
         <h3 className="category-title">Category</h3>
         <div className="popular-container">
-          <Category />
+          <Category 
+            onCategorySelect={handleCategorySelect} 
+            selectedCategories={selectedCategories}
+          />
           <div className="category-tracks">
             <div className="track-subcate-container">
               <div className="chosenCategory">
-                <p className="chosen">Nature</p>
-                <p className="chosen">Ocean Waves</p>
+                {selectedCategories.length > 0 ? (
+                  selectedCategories.map((cat, index) => (
+                    <div key={index} className="chosen-wrapper">
+                      <p className="chosen">{cat}</p>
+                      <button 
+                        className="remove-category" 
+                        onClick={() => handleCategorySelect(cat)}
+                        aria-label={`Remove ${cat} filter`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="chosen-default">All Categories</p>
+                )}
               </div>
-              <span className="filterIcon">I</span>
+              {selectedCategories.length > 0 && (
+                <button 
+                  className="clearFilters" 
+                  onClick={() => setSelectedCategories([])}
+                  style={{ 
+                    border: 'none', 
+                    background: 'transparent', 
+                    color: '#F4671F', 
+                    cursor: 'pointer',
+                    fontWeight: 'bold' 
+                  }}
+                >
+                  Clear Filters
+                </button>
+              )}
             </div>
             <div className="tracks">
-              {homepageSounds.map((sound, index) => (
+              {(filteredSounds.length > 0 ? filteredSounds : homepageSounds).map((sound, index) => (
                 <TrackCard
                   key={index}
                   imageUrl={sound.image_url || "/spaceshipFlying.jpg"}
@@ -271,6 +333,11 @@ export default function Home() {
                   />
                 ))
               }
+              {filteredSounds.length === 0 && selectedCategories.length > 0 && (
+                <div style={{ textAlign: 'center', padding: '30px', color: '#868686' }}>
+                  No sounds match the selected categories.
+                </div>
+              )}
             </div>
           </div>
         </div>
