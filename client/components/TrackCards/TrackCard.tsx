@@ -12,15 +12,14 @@ interface TrackCardProps {
   previewUrl?: string;
 }
 const TrackCard: React.FC<TrackCardProps> = ({
-  imageUrl = "/spaceshipFlying.jpg", // default if no image is passed in
-  altText = "beach wave",             // default alt text
-  date = "February 1st, 2025",         // default date; preserved from your original code
-  name = "Rolling Ocean Swells",       // default name
-  description = "Deep, powerful waves rising and falling in the open sea, producing a soothing, continuous rumble.", // default description
-  previewUrl                          // no default; will render audio if provided
+  imageUrl,  // no default
+  altText,   // no default
+  date,      // no default
+  name,      // no default
+  description, // no default
+  previewUrl // no default
 }) => {
 
-  // Create a ref to the audio element
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressContainerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
