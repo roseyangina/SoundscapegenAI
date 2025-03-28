@@ -34,7 +34,8 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=soundscape_db
-      - FREESOUND_API_KEY=${FREESOUND_API_KEY}
+    env_file:
+      - ./server/.env
     volumes:
       - ./server:/app
       - /app/node_modules
@@ -45,8 +46,8 @@ services:
       context: ./nlp
       dockerfile: Dockerfile
     environment:
-      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
-      - FREESOUND_API_KEY=${FREESOUND_API_KEY}
+      - MISTRAL_API_KEY=IURbRfRxX2jEZWbaYnsk9XjHnYgfoCvS
+      - FREESOUND_API_KEY=iBdKnLreGmFekoubGrHTItULbSBuZzxmjsr3q7gP
     container_name: soundscape-python
     ports:
       - "3002:3002"
