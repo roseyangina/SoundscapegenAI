@@ -29,6 +29,8 @@ export default function Home() {
   const [soundscapeDetails, setSoundscapeDetails] = useState<SoundscapeDetails | null>(null);
   const [isLoadingSoundscape, setIsLoadingSoundscape] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [inputError, setInputError] = useState<{message: string, suggestions: string[]} | null>(null);
 
   // ****New state for homepage sounds:***
   const [homepageSounds, setHomepageSounds] = useState<any[]>([]);
@@ -70,6 +72,10 @@ export default function Home() {
   }  
 
   async function handleSubmit(e: React.MouseEvent<HTMLButtonElement>) {
+    // Clear previous errors and set loading state
+    setInputError(null);
+    setIsLoading(true);
+    
     try {
       const response = await fetch("http://localhost:3001/api/keywords", {
         method: "POST",
@@ -78,11 +84,43 @@ export default function Home() {
       });
   
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        // Try to parse the error response first
+        let errorMessage = `Request failed with status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          // Use the server's error message if available
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          // If parsing fails, use the status text
+          errorMessage = `API request failed: ${response.status} ${response.statusText}`;
+        }
+        
+        setInputError({
+          message: errorMessage,
+          suggestions: [
+            "forest with birds and a stream",
+            "busy cafe with people talking",
+            "thunderstorm at night",
+            "ocean waves on a beach",
+            "spaceship engine room humming"
+          ]
+        });
+        return;
       }
   
       const data = await response.json();
-       // checking for keywords
+      setResponse(data);
+      
+      // Check if the input was invalid (not related to soundscape)
+      if (!data.success && data.is_valid_input === false) {
+        setInputError({
+          message: data.message || "Your input does not appear to be a soundscape request.",
+          suggestions: data.suggestions || []
+        });
+        return;
+      }
+      
+      // checking for keywords
       console.log("Extracted Keywords:", data.keywords);
       if (data?.sounds?.length) {
         // Pass both URL and name to mixer
@@ -100,11 +138,46 @@ export default function Home() {
   
         const soundsParam = encodeURIComponent(JSON.stringify(extractedSounds));
         router.push(`/mixer?sounds=${soundsParam}`); // passing sounds to mixer
+      } else if (data.keywords && data.keywords.length > 0) {
+        // We have keywords but no sounds
+        setInputError({
+          message: "We found keywords related to your soundscape, but couldn't find any matching sounds.",
+          suggestions: []
+        });
+      } else {
+        // No keywords and no sounds
+        setInputError({
+          message: "We couldn't process your request. Please try a different description.",
+          suggestions: [
+            "forest with birds and a stream",
+            "busy cafe with people talking",
+            "thunderstorm at night",
+            "ocean waves on a beach",
+            "spaceship engine room humming"
+          ]
+        });
       }
     } catch (err) {
       console.error("Error fetching sounds:", err);
+      setInputError({
+        message: "There was an error processing your request. Please try again.",
+        suggestions: [
+          "forest with birds and a stream",
+          "busy cafe with people talking",
+          "thunderstorm at night",
+          "ocean waves on a beach",
+          "spaceship engine room humming"
+        ]
+      });
+    } finally {
+      setIsLoading(false);
     }
   }
+  
+  // Function to set input string from suggestion
+  const handleUseSuggestion = (suggestion: string) => {
+    setInputString(suggestion);
+  };
 
   async function handleCreateSoundscape() { // create soundscape for each sound we get from response
     if (!response?.sounds || response.sounds.length === 0) {
@@ -198,10 +271,44 @@ export default function Home() {
             }
           }}
         />
-        <button onClick={handleSubmit}>
-          <HugeiconsIcon icon={AiSearch02Icon} size={24} className="search-icon" />
+        <button onClick={handleSubmit} disabled={isLoading}>
+          {isLoading ? 'Processing...' : (
+            <HugeiconsIcon icon={AiSearch02Icon} size={24} className="search-icon" />
+          )}
         </button>
       </div>
+      
+      {/* Error message display */}
+      {inputError && (
+        <div className="error-container">
+          <div className="error-message">
+            <div className="error-header">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <h3>Invalid Soundscape Prompt</h3>
+            </div>
+            {inputError.suggestions.length > 0 && (
+              <>
+                <p className="suggestion-title">Try one of these examples instead:</p>
+                <div className="suggestion-buttons">
+                  {inputError.suggestions.map((suggestion, index) => (
+                    <button 
+                      key={index} 
+                      className="suggestion-button"
+                      onClick={() => handleUseSuggestion(suggestion)}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {activeTab === "create" ? (
         <div>

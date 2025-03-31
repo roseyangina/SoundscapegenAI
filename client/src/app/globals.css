@@ -150,6 +150,13 @@ h2 {
   flex-direction: row;
 }
 
+.category-tracks {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 20px;
+}
+
 .tracks {
   display: flex;
   flex-direction: column;
@@ -175,12 +182,14 @@ h2 {
   flex-direction: row;
   align-items: center;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .chosenCategory {
   display: flex;
-  flex-direction: flex-end;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
 }
 
 .filterIcon {
@@ -204,6 +213,7 @@ h2 {
   padding: 8px 36px 8px 16px;
   border-radius: 29px;
   border: 2px solid #F4671F;
+  margin: 0;
 }
 
 .remove-category {
@@ -254,4 +264,91 @@ h2 {
   padding: 8px 16px;
   border-radius: 29px;
   border: 2px solid #F4671F;
+}
+
+.error-container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 15px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.error-message {
+  background-color: #fff1f0;
+  border-left: 4px solid #ff4d4f;
+  border-radius: 8px;
+  padding: 18px 20px;
+  color: #cf1322;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  font-family: Poppins, sans-serif;
+}
+
+.error-message p {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.error-message p:first-child {
+  font-weight: 500;
+  font-size: 17px;
+}
+
+.suggestion-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.suggestion-button {
+  background: #fafafa;
+  border: 1px solid #d9d9d9;
+  border-radius: 20px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  font-family: "Inria Sans", sans-serif;
+  color: #333;
+}
+
+.suggestion-button:hover {
+  background: #fff7e6;
+  border-color: #F4671F;
+  color: #F4671F;
+  transform: translateY(-1px);
+}
+
+.suggestion-button:active {
+  transform: translateY(0);
+}
+
+.error-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+
+.error-header svg {
+  color: #ff4d4f;
+}
+
+.error-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #cf1322;
+}
+
+.suggestion-title {
+  margin-top: 15px;
+  font-weight: 500;
+  color: #555;
 }

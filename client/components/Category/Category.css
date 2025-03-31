@@ -37,14 +37,15 @@
     font-weight: 500;
     font-family: Poppins;
     margin-top: 5px;
-    padding-left: 10px;
+    padding-left: 0;
+    margin-left: 0;
 }
 
 .subcategory ul li {
     transition: all 0.2s ease;
     margin-bottom: 8px;
     cursor: pointer;
-    padding: 6px 8px;
+    padding: 4px 8px;
     border-radius: 4px;
     position: relative;
 }
@@ -59,5 +60,7 @@
     font-weight: 700;
     border-left: 3px solid #F4671F;
     background-color: #FAF0ED;
+    margin-left: 0;
+    padding: 4px 8px 4px 5px;
 }
 

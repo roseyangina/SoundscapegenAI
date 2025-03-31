@@ -38,7 +38,10 @@ app.post('/api/keywords', async (req, res) => {
     try {
         if (!redisClient.isReady) {
             console.error("Redis client not ready");
-            throw new Error("Redis client not ready");
+            return res.status(500).json({
+                success: false,
+                message: "Internal server error: Cache service unavailable. Please try again later."
+            });
         }
 
         console.log("Checking Redis cache for:", `keywords:${str}`);
@@ -63,49 +66,94 @@ app.post('/api/keywords', async (req, res) => {
                 break; // If successful, stop retry loop
             } catch (error) {
                 retries--;
-                if (retries === 0) throw error;
+                if (retries === 0) {
+                    console.error("Failed to reach Python service after multiple attempts:", error);
+                    return res.status(503).json({
+                        success: false, 
+                        message: "Service temporarily unavailable. Please try again later."
+                    });
+                }
                 console.log(`Retrying Python service request... ${retries} attempts remaining`);
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
 
-        let keywords;
+        // Parse JSON response once
+        let jsonResponse;
+        try {
+            jsonResponse = await response.json();
+        } catch (error) {
+            console.error("Failed to parse Python service response:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Error processing the soundscape request. Please try again."
+            });
+        }
+
         if (response.ok) {
-            keywords = await response.json()
-            if (!keywords.success) {
+            if (!jsonResponse.success) {
                 console.log("Error in python response, success=false");
-                return res.status(500).send({
-                    message: "Error from the Python server."
+                return res.status(400).json({
+                    success: false,
+                    message: jsonResponse.message || "Unable to process your soundscape request.",
+                    is_valid_input: jsonResponse.is_valid_input || false,
+                    suggestions: jsonResponse.suggestions || [
+                        "forest with birds and a stream",
+                        "busy cafe with people talking",
+                        "thunderstorm at night",
+                        "ocean waves on a beach",
+                        "spaceship engine room humming"
+                    ]
                 });
             }
 
-            // Cache result if success
-            console.log("got keywords:")
-            console.log(keywords)
-            
             // Check if preview URLs are present
-            if (keywords && keywords.success && keywords.sounds) {
+            if (jsonResponse && jsonResponse.success && jsonResponse.sounds) {
                 console.log("Checking preview URLs in sounds:");
-                keywords.sounds.forEach((sound, index) => {
+                jsonResponse.sounds.forEach((sound, index) => {
                     console.log(`Sound ${index} preview_url:`, sound.preview_url);
                 });
             }
 
-            if (keywords && keywords.success) {
-                await redisClient.set(`keywords:${str}`, JSON.stringify(keywords));
+            // Cache result if success
+            console.log("got keywords:");
+            console.log(jsonResponse);
+            
+            if (jsonResponse && jsonResponse.success) {
+                await redisClient.set(`keywords:${str}`, JSON.stringify(jsonResponse));
             }
             
-            return res.status(201).json(keywords);
+            return res.status(200).json(jsonResponse);
         } else {
             // Non-OK response
             console.log("Python service returned non-OK response:", response.status);
-            return res.status(response.status).send({
-                message: "Error processing request"
+            
+            // Use the error message from the Python service if available
+            return res.status(400).json({
+                success: false,
+                message: jsonResponse?.message || "Failed to process your soundscape request.",
+                suggestions: [
+                    "forest with birds and a stream",
+                    "busy cafe with people talking",
+                    "thunderstorm at night",
+                    "ocean waves on a beach",
+                    "spaceship engine room humming"
+                ]
             });
         }
     } catch (error) {
         console.log("Error: ", error);
-        return res.status(500).send({message: "Error with the server, unable to process input"});
+        return res.status(500).json({
+            success: false, 
+            message: "Server error processing the soundscape request. Please try again later.",
+            suggestions: [
+                "forest with birds and a stream",
+                "busy cafe with people talking",
+                "thunderstorm at night",
+                "ocean waves on a beach",
+                "spaceship engine room humming"
+            ]
+        });
     }
 });
 

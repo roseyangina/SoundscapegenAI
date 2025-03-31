@@ -23,6 +23,15 @@ def keywords():
         # Mistral-based function
         keywords_result = get_keywords(input_str, min_keywords=6)
 
+        # Check if the result indicates an invalid input (non-soundscape)
+        if isinstance(keywords_result, dict) and keywords_result.get('error'):
+            return jsonify(
+                success=False,
+                message=keywords_result.get('message', "Your input does not appear to be related to a soundscape."),
+                is_valid_input=False,
+                suggestions=keywords_result.get('suggestions', [])
+            ), 200
+
         # fallback if no keywords found
         if not keywords_result:
             return jsonify(

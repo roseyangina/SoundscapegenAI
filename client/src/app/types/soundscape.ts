@@ -33,6 +33,10 @@ export interface SoundscapeDetails {
 }
 
 export interface KeywordResponse {
+  success: boolean;
+  message?: string;
   keywords?: string[];
   sounds?: Sound[];
+  is_valid_input?: boolean;
+  suggestions?: string[];
 } 
