@@ -1,9 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { AiSearch02Icon } from "@hugeicons/core-free-icons";
-
-// import { Search, AudioLines, SlidersHorizontal } from "lucide-react";
 
 import Navbar from "../../components/Navbar/Navbar";
 import RecentlyCard from "../../components/RecentlyCards/RecentlyCard";
@@ -31,6 +27,14 @@ export default function Home() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [inputError, setInputError] = useState<{message: string, suggestions: string[]} | null>(null);
+
+  function generateTitleFromKeywords(keywords: string[]): string {
+    if (!keywords.length) return "My Soundscape";
+    return keywords
+      .slice(0, 2)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" - ");
+  }
 
   // ****New state for homepage sounds:***
   const [homepageSounds, setHomepageSounds] = useState<any[]>([]);
@@ -109,7 +113,7 @@ export default function Home() {
       }
   
       const data = await response.json();
-      setResponse(data);
+      // setResponse(data);
       
       // Check if the input was invalid (not related to soundscape)
       if (!data.success && data.is_valid_input === false) {
@@ -124,20 +128,26 @@ export default function Home() {
       console.log("Extracted Keywords:", data.keywords);
       if (data?.sounds?.length) {
         // Pass both URL and name to mixer
-        const extractedSounds = data.sounds.map((sound: any) => ({
-          url: sound.preview_url,
-          name: sound.name
-        }));
-  
+        // const extractedSounds = data.sounds.map((sound: any) => ({
+        //   url: sound.preview_url,
+        //   name: sound.name
+        // }));
+        const extractedSounds = data.sounds.map((sound: any) => sound.preview_url);
+
+        const generatedTitle = generateTitleFromKeywords(data.keywords || []);
+
         console.log("Extracted Sounds:", extractedSounds); 
-        const invalidSounds = extractedSounds.filter((sound: {url: string, name: string}) => !sound.url || sound.url === "");
+        // const invalidSounds = extractedSounds.filter((sound: {url: string, name: string}) => !sound.url || sound.url === "");
+        const invalidSounds = extractedSounds.filter((url: string) => !url || url === "");
 
         if (invalidSounds.length > 0) {
           console.warn("Some sounds are missing preview URLs:", invalidSounds);
         }
   
         const soundsParam = encodeURIComponent(JSON.stringify(extractedSounds));
-        router.push(`/mixer?sounds=${soundsParam}`); // passing sounds to mixer
+        const titleParam = encodeURIComponent(generatedTitle);
+
+        router.push(`/mixer?sounds=${soundsParam}&title=${titleParam}`); // passing sounds to mixer
       } else if (data.keywords && data.keywords.length > 0) {
         // We have keywords but no sounds
         setInputError({
@@ -273,7 +283,12 @@ export default function Home() {
         />
         <button onClick={handleSubmit} disabled={isLoading}>
           {isLoading ? 'Processing...' : (
-            <HugeiconsIcon icon={AiSearch02Icon} size={24} className="search-icon" />
+            <svg id="Search--Streamline-Carbon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="24" width="24">
+              <desc>Search Streamline Icon: https://streamlinehq.com</desc>
+              <defs></defs>
+              <path d="m21.75 20.689425 -5.664075 -5.664075a8.263275 8.263275 0 1 0 -1.060575 1.060575L20.689425 21.75ZM3 9.75a6.75 6.75 0 1 1 6.75 6.75 6.7575 6.7575 0 0 1 -6.75 -6.75Z" fill="#f4671f" strokeWidth="0.75"></path>
+              <path id="_Transparent_Rectangle_" d="M0 0h24v24H0Z" fill="none" strokeWidth="0.75"></path>
+            </svg>
           )}
         </button>
       </div>
@@ -383,7 +398,7 @@ export default function Home() {
 
 
       {/* ------------------ Updated Popular Sounds Section ------------------ */}
-      <div className="popular">
+      <div id="popular" className="popular">
         <h2>Popular Sounds</h2>
         <div className="dash3"></div>
         <h3 className="category-title">Category</h3>
@@ -451,7 +466,9 @@ export default function Home() {
       </div>
       {/* --------------------------------------------------------------------- */}
 
-      <About />
+      <div id="about">        
+        <About />
+      </div>    
     </div>
   );
 }

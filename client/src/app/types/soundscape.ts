@@ -29,14 +29,12 @@ export interface SoundscapeDetails {
     name: string;
     description: string;
     file_path: string;
+    volume?: number;
+    pan?: number;
   }>;
 }
 
 export interface KeywordResponse {
-  success: boolean;
-  message?: string;
   keywords?: string[];
   sounds?: Sound[];
-  is_valid_input?: boolean;
-  suggestions?: string[];
 } 

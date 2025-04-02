@@ -35,6 +35,13 @@ import React, {
       setUser(false);
       setDropdown(false);
     };
+
+    const scrollToSection = (sectionId) => {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth" });
+      }
+    };
   
     useEffect(() => {
       // Generic Event is enough since we’re attaching to document
@@ -60,13 +67,17 @@ import React, {
           <nav className="navLinks">
             <ul>
               <li> {/* home page is both / and /home */}
-                <Link href="/">Home</Link>
+                <Link href="/" className="nav-btn">Home</Link>
               </li>
               <li>
-                <Link href="/popular">Popular</Link>
+                <button onClick={() => scrollToSection("popular")} className="nav-btn">
+                  Popular
+                </button>
               </li>
               <li>
-                <Link href="/about">About Us</Link>
+                <button onClick={() => scrollToSection("about")} className="nav-btn">
+                  About Us
+                </button>
               </li>
             </ul>
           </nav>
