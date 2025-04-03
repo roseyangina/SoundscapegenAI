@@ -19,12 +19,27 @@ def get_keywords(user_text: str, min_keywords: int = 6):
     
     Input: "{user_text}"
     
+    Be lenient in your validation. Even simple single words like "river", "forest", "cafe", or short phrases like "cafe noise" or "ocean waves" should be considered valid if they describe a potential sound or environment.
+    
     Respond with ONLY a JSON object with two fields:
     1. "is_valid": true if the input describes a soundscape or sounds, false otherwise
     2. "reason": explanation of why it's valid or invalid
     
-    Examples of valid inputs: "forest with birds and a stream", "busy cafe with people talking and coffee machines", "thunderstorm at night"
-    Examples of invalid inputs: "what is the capital of France", "write an essay about climate change", "how to program in Python"
+    Examples of valid inputs: 
+    - "forest with birds and a stream"
+    - "busy cafe with people talking and coffee machines"
+    - "thunderstorm at night"
+    - "river"
+    - "cafe noise" 
+    - "ocean"
+    - "city"
+    - "give me soundscape of xyz"
+    - "sounds for xyz"
+    
+    Examples of invalid inputs: 
+    - "what is the capital of France"
+    - "write an essay about climate change"
+    - "how to program in Python"
     
     Return ONLY the JSON object, no other text.
     """.strip()
@@ -75,6 +90,11 @@ def get_keywords(user_text: str, min_keywords: int = 6):
         or generate relevant sound effect keywords that could be used to search a sound library.
         
         Description: "{user_text}"
+        
+        If the description is simple (like a single word such as "river", "cafe", "ocean"), expand it into multiple related sound keywords.
+        For example:
+        - For "river": ["flowing water", "river current", "stream bubbling", "water splash", "gentle brook", "river ambience"]
+        - For "cafe": ["coffee shop ambience", "people chatting", "coffee machine", "cup clinking", "cafe background", "restaurant noise"]
         
         Generate exactly {min_keywords} keywords related to sounds described. Format your response as ONLY a JSON 
         array of strings. For example: ["spaceship hum", "engine rumble", "space atmosphere", "control panel beeps", 
