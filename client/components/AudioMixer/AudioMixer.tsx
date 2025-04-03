@@ -67,8 +67,12 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
   initialVolumes = [],
   initialPans = [],
   title,
-  readOnly = false 
+  readOnly = false,
+  trackNames = []
 }) => {
+  // Add console log to debug track names
+  console.log("Track names received:", trackNames);
+  
   const [tracks, setTracks] = useState<AudioTrack[]>([]);
   const [masterVolume, setMasterVolume] = useState<number>(0);
   const [loadedCount, setLoadedCount] = useState<number>(0);
@@ -429,9 +433,12 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       // Map over the current tracks state to download sounds and get settings
       const downloadPromises = tracks.map(async (track) => {
         const originalSoundId = soundIds[track.id] || 0; // Find original ID based on track index
+        // Use the track name from trackNames prop if available, otherwise use default "Track N"
+        const trackName = trackNames[track.id] || `Track ${track.id + 1}`;
+        
         const soundObj: Sound = {
           sound_number: String(track.id + 1), // Use current track info
-          name: `Track ${track.id + 1}`,
+          name: trackName,
           description: `Sound from ${track.url}`,
           sound_url: track.url,
           preview_url: track.url,
@@ -707,7 +714,9 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
                   </div>
 
                   <div className="channel-label">
-                    <p className='label'>Track {track.id + 1}</p>
+                    <p className='label' title={trackNames[track.id] || `Track ${track.id + 1}`}>
+                      {trackNames[track.id] ? trackNames[track.id] : `Track ${track.id + 1}`}
+                    </p>
                     {!readOnly && (
                       <button 
                         className="delete-track-btn" 

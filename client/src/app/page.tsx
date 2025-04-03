@@ -127,17 +127,15 @@ export default function Home() {
       // checking for keywords
       console.log("Extracted Keywords:", data.keywords);
       if (data?.sounds?.length) {
-        // Pass both URL and name to mixer
-        // const extractedSounds = data.sounds.map((sound: any) => ({
-        //   url: sound.preview_url,
-        //   name: sound.name
-        // }));
+        // Pass both URLs and names to mixer
         const extractedSounds = data.sounds.map((sound: any) => sound.preview_url);
+        const soundNames = data.sounds.map((sound: any) => sound.name);
 
         const generatedTitle = generateTitleFromKeywords(data.keywords || []);
 
         console.log("Extracted Sounds:", extractedSounds); 
-        // const invalidSounds = extractedSounds.filter((sound: {url: string, name: string}) => !sound.url || sound.url === "");
+        console.log("Sound Names:", soundNames);
+        
         const invalidSounds = extractedSounds.filter((url: string) => !url || url === "");
 
         if (invalidSounds.length > 0) {
@@ -145,9 +143,10 @@ export default function Home() {
         }
   
         const soundsParam = encodeURIComponent(JSON.stringify(extractedSounds));
+        const namesParam = encodeURIComponent(JSON.stringify(soundNames));
         const titleParam = encodeURIComponent(generatedTitle);
 
-        router.push(`/mixer?sounds=${soundsParam}&title=${titleParam}`); // passing sounds to mixer
+        router.push(`/mixer?sounds=${soundsParam}&names=${namesParam}&title=${titleParam}`);
       } else if (data.keywords && data.keywords.length > 0) {
         // We have keywords but no sounds
         setInputError({
@@ -409,57 +408,57 @@ export default function Home() {
           />
           <div className="category-tracks">
             <div className="track-subcate-container">
-              <div className="chosenCategory">
-                {selectedCategories.length > 0 ? (
-                  selectedCategories.map((cat, index) => (
-                    <div key={index} className="chosen-wrapper">
-                      <p className="chosen">{cat}</p>
-                      <button 
-                        className="remove-category" 
-                        onClick={() => handleCategorySelect(cat)}
-                        aria-label={`Remove ${cat} filter`}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <p className="chosen-default">All Categories</p>
-                )}
-              </div>
-              {selectedCategories.length > 0 && (
-                <button 
-                  className="clearFilters" 
-                  onClick={() => setSelectedCategories([])}
-                  style={{ 
-                    border: 'none', 
-                    background: 'transparent', 
-                    color: '#F4671F', 
-                    cursor: 'pointer',
-                    fontWeight: 'bold' 
-                  }}
-                >
-                  Clear Filters
-                </button>
+            <div className="chosenCategory">
+              {selectedCategories.length > 0 ? (
+                selectedCategories.map((cat, index) => (
+                  <div key={index} className="chosen-wrapper">
+                    <p className="chosen">{cat}</p>
+                    <button 
+                      className="remove-category" 
+                      onClick={() => handleCategorySelect(cat)}
+                      aria-label={`Remove ${cat} filter`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p className="chosen-default">All Categories</p>
               )}
             </div>
-            <div className="tracks">
-              {(filteredSounds.length > 0 ? filteredSounds : homepageSounds).map((sound, index) => (
-                <TrackCard
-                  key={index}
-                  imageUrl={sound.image_url || "/spaceshipFlying.jpg"}
-                  altText={sound.name}
-                  name={sound.name}
-                  description={sound.description}
-                  previewUrl={sound.preview_url}
-                  />
-                ))
-              }
-              {filteredSounds.length === 0 && selectedCategories.length > 0 && (
-                <div style={{ textAlign: 'center', padding: '30px', color: '#868686' }}>
-                  No sounds match the selected categories.
-                </div>
-              )}
+            {selectedCategories.length > 0 && (
+              <button 
+                className="clearFilters" 
+                onClick={() => setSelectedCategories([])}
+                style={{ 
+                  border: 'none', 
+                  background: 'transparent', 
+                  color: '#F4671F', 
+                  cursor: 'pointer',
+                  fontWeight: 'bold' 
+                }}
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+          <div className="tracks">
+            {(filteredSounds.length > 0 ? filteredSounds : homepageSounds).map((sound, index) => (
+              <TrackCard
+                key={index}
+                imageUrl={sound.image_url || "/spaceshipFlying.jpg"}
+                altText={sound.name}
+                name={sound.name}
+                description={sound.description}
+                previewUrl={sound.preview_url}
+                />
+              ))
+            }
+            {filteredSounds.length === 0 && selectedCategories.length > 0 && (
+              <div style={{ textAlign: 'center', padding: '30px', color: '#868686' }}>
+                No sounds match the selected categories.
+              </div>
+            )}
             </div>
           </div>
         </div>

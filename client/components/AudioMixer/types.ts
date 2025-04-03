@@ -14,12 +14,13 @@ export interface AudioTrack {
     isMuted: boolean;
 }
 
-// An array of sound URLs is passed in as props to the AudioMixer component
+// The props for the AudioMixer component
 export interface AudioMixexProps {
-    soundUrls: string[];
-    soundIds?: number[];
-    initialVolumes?: number[];
-    initialPans?: number[];
-    title?: string;
-    readOnly?: boolean;
+    soundUrls: string[]; // Array of sound URLs to play
+    soundIds?: number[]; // Array of sound IDs from the database
+    initialVolumes?: number[]; // Initial volume settings for each track
+    initialPans?: number[]; // Initial pan settings for each track
+    title?: string | null; // Optional title for the mixer
+    readOnly?: boolean; // Whether the mixer is in read-only mode
+    trackNames?: string[]; // Array of descriptive names for each track
 } 

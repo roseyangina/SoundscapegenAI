@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from nlp_model import get_keywords
+from nlp_model import get_keywords, generate_track_names
 from freesound import search_freesound
 
 app = Flask(__name__)
@@ -60,11 +60,33 @@ def keywords():
                 "preview_url": sound.get("preview_url", ""),
                 "freesound_id": sound.get("id")
             })
+            
+        # Generate better track names using Mistral
+        sounds_with_better_names = generate_track_names(sounds_info)
 
-        return jsonify(success=True, keywords=keywords_result, sounds=sounds_info), 200
+        return jsonify(success=True, keywords=keywords_result, sounds=sounds_with_better_names), 200
 
     except Exception as e:
         print("Exception in /api/keywords:", e)
+        return jsonify(success=False, message=str(e)), 500
+
+@app.route('/api/track-names', methods=['POST'])
+def track_names():
+    data = request.get_json()
+    
+    if not data or 'sounds' not in data:
+        return jsonify(success=False, message="Missing 'sounds' parameter in the request."), 400
+
+    sounds_info = data['sounds']
+    
+    try:
+        # Generate better track names using Mistral
+        sounds_with_better_names = generate_track_names(sounds_info)
+        
+        return jsonify(success=True, sounds=sounds_with_better_names), 200
+        
+    except Exception as e:
+        print("Exception in /api/track-names:", e)
         return jsonify(success=False, message=str(e)), 500
 
 if __name__ == '__main__':

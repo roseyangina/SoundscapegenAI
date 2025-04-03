@@ -123,3 +123,101 @@ def get_keywords(user_text: str, min_keywords: int = 6):
     except Exception as e:
         print("Error calling Mistral:", e)
         return []
+
+def generate_track_names(sounds_info):
+    """
+    Generate more descriptive names for sound tracks based on their original names and descriptions.
+    
+    Args:
+        sounds_info: List of dictionaries containing sound information with 'name' and 'description' keys
+        
+    Returns:
+        List of dictionaries with the same structure as input, but with improved 'name' values
+    """
+    if not sounds_info:
+        return []
+    
+    # Construct a batch prompt for all sounds to minimize API calls
+    prompt_parts = []
+    for idx, sound in enumerate(sounds_info):
+        sound_name = sound.get("name", "Unnamed Sound")
+        sound_description = sound.get("description", "No description")
+        
+        # Truncate description if too long
+        if len(sound_description) > 300:
+            sound_description = sound_description[:300] + "..."
+            
+        prompt_parts.append(f"""Sound {idx+1}:
+Name: "{sound_name}"
+Description: "{sound_description}"
+""")
+    
+    sounds_data = "\n\n".join(prompt_parts)
+    
+    prompt = f"""You are a sound naming expert. Give each sound below a short, descriptive name (2-4 words) that clearly describes what the sound is.
+    
+The names should be concise, descriptive, and focused on what the sound actually is (not poetic or abstract).
+Ignore any irrelevant details in the description. Focus on creating practical, useful names that accurately describe the sound content.
+
+{sounds_data}
+
+Format your response as a JSON array of strings containing ONLY the new names in the same order as the sounds above.
+For example: ["Wind Through Pines", "Ocean Waves Crashing", "Distant Thunder", "City Traffic", "Coffee Shop Ambience", "Computer Server Room"]
+
+IMPORTANT: Return ONLY the JSON array, no other text or explanation.
+"""
+
+    try:
+        response = mistral_client.chat.complete(
+            model=MODEL_NAME,
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+        )
+
+        raw_text = response.choices[0].message.content.strip()
+        print(f"Track names raw response: {raw_text}")  
+        
+        # Clean up response if wrapped in code blocks
+        if "```json" in raw_text:
+            raw_text = raw_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw_text:
+            raw_text = raw_text.split("```")[1].strip()
+        
+        try:
+            track_names = json.loads(raw_text)
+            if not isinstance(track_names, list):
+                print("Mistral returned valid JSON but not a list for track names:", track_names)
+                return sounds_info  # Return original sounds if format is incorrect
+            
+            # Make sure we have the right number of names
+            if len(track_names) != len(sounds_info):
+                print(f"Warning: Expected {len(sounds_info)} track names but got {len(track_names)}")
+                # If too few names, keep original names for the remaining sounds
+                if len(track_names) < len(sounds_info):
+                    track_names.extend([s.get("name", f"Sound {i+1+len(track_names)}") 
+                                       for i, s in enumerate(sounds_info[len(track_names):])])
+                # If too many names, truncate
+                else:
+                    track_names = track_names[:len(sounds_info)]
+            
+            # Create a new list with updated names
+            result = []
+            for i, sound in enumerate(sounds_info):
+                sound_copy = dict(sound)  # Create a copy to avoid modifying the original
+                # Store original name as freesound_name and use new name for name
+                sound_copy["freesound_name"] = sound.get("name", "Unnamed Sound")
+                sound_copy["name"] = track_names[i]
+                result.append(sound_copy)
+            
+            return result
+            
+        except json.JSONDecodeError as e:
+            print(f"JSON parse error for track names: {e}")
+            print("Raw text that failed parsing:", raw_text)
+            # Return original sounds if we couldn't parse the response
+            return sounds_info
+            
+    except Exception as e:
+        print("Error calling Mistral for track names:", e)
+        return sounds_info

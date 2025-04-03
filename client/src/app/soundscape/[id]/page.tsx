@@ -23,38 +23,43 @@ export default function SoundscapePage() {
   const [soundIds, setSoundIds] = useState<number[]>([]);
   const [soundVolumes, setSoundVolumes] = useState<number[]>([]);
   const [soundPans, setSoundPans] = useState<number[]>([]);
+  const [trackNames, setTrackNames] = useState<string[]>([]);
 
-  useEffect(() => { // fetch soundscape details and prepare data for AudioMixer
-    async function fetchSoundscape() {
-      if (!soundscapeId) return;
-
-      setIsLoading(true);
-      setError(null);
-
+  useEffect(() => {
+    async function fetchSoundscapeDetails() {
       try {
+        setIsLoading(true);
         const data = await getSoundscapeById(soundscapeId);
-        setSoundscapeDetails(data);
         
-        if (data.sounds && data.sounds.length > 0) { // retrieve data from db for AudioMixer
+        if (data.success) {
+          setSoundscapeDetails(data);
+          
+          // Extract data for AudioMixer
           const urls = data.sounds.map(sound => `http://localhost:3001${sound.file_path}`);
           const ids = data.sounds.map(sound => sound.sound_id);
-          const volumes = data.sounds.map(sound => sound.volume || 0);
-          const pans = data.sounds.map(sound => sound.pan || 0);
+          const volumes = data.sounds.map(sound => sound.volume || 1.0);
+          const pans = data.sounds.map(sound => sound.pan || 0.0);
+          const names = data.sounds.map(sound => sound.name || `Sound ${sound.sound_id}`);
           
           setSoundUrls(urls);
           setSoundIds(ids);
           setSoundVolumes(volumes);
           setSoundPans(pans);
+          setTrackNames(names);
+        } else {
+          setError("Failed to load soundscape");
         }
       } catch (err) {
         console.error("Error fetching soundscape:", err);
-        setError("Failed to load soundscape. It may not exist or has been removed.");
+        setError("Error loading soundscape. It may not exist or has been deleted.");
       } finally {
         setIsLoading(false);
       }
     }
-
-    fetchSoundscape();
+    
+    if (soundscapeId) {
+      fetchSoundscapeDetails();
+    }
   }, [soundscapeId]);
 
   return (
@@ -108,6 +113,7 @@ export default function SoundscapePage() {
                   soundIds={soundIds} 
                   initialVolumes={soundVolumes} 
                   initialPans={soundPans}
+                  trackNames={trackNames}
                   readOnly={true}
                 />
               ) : (
