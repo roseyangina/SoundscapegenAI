@@ -1,7 +1,12 @@
+/* Import Poppins font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Apply Poppins to all elements in the mixer */
 .mixer-page {
     display: flex;
     flex-direction: column;
     width: 100%;
+    font-family: 'Poppins', sans-serif;
 }
 
 .mixer-component {
@@ -53,9 +58,9 @@
 
 .title {
     color: #FFF;
-    font-family: "Share Tech";
+    font-family: 'Poppins', sans-serif;
     font-size: 19px;
-    font-weight: 400;
+    font-weight: 600;
     text-shadow: 0 0 5px #6e6e6e, 0 0 10px #4a4a4a;
     margin-bottom: 5px;
     margin-top: 10px;
@@ -305,9 +310,9 @@
 .mix-title {
     margin-top: 5px;
     text-align: center;
-    font-family: Helvetica;
+    font-family: 'Poppins', sans-serif;
     font-size: 20px;
-    font-weight: 700;
+    font-weight: 500;
     background: var(--Gradient, linear-gradient(180deg, #F14A21 0%, #F4671F 75%, #F7861C 100%));
     background-clip: text;
     -webkit-background-clip: text;
@@ -324,9 +329,9 @@
   
 .display-text p {
     color: #278F7C;
-    font-family: "Share Tech Mono";
+    font-family: 'Poppins', sans-serif;
     font-size: 24px;
-    font-weight: 400;
+    font-weight: 500;
     text-align: center;
     margin-top: 8px;
 }
@@ -366,9 +371,9 @@
 }
 
 .display-screen p {
-    font-family: "Share Tech Mono";
+    font-family: 'Poppins', sans-serif;
     font-size: 24px;
-    font-weight: 400;
+    font-weight: 500;
 }
 
 .knob-container {
@@ -470,6 +475,7 @@
     font-weight: 700;
     margin: auto;
     cursor: pointer;
+    font-family: 'Poppins', sans-serif;
 }
 
 .btn button:hover {
@@ -590,12 +596,16 @@
     width: 100%;
     height: 32px;
     opacity: 0.76;
-    padding-bottom:3px;
+    padding-bottom: 3px;
     background: #FFF;
     box-shadow: -1px -1px 2px 0px rgba(194, 194, 194, 0.5) inset,
                 -1px 1px 2px 0px rgba(98, 42, 12, 0.20),
                 1px -1px 2px 0px rgba(98, 42, 12, 0.20),
                 1px 1px 3px 0px rgba(98, 42, 12, 0.90);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
 }
 
 .label {
@@ -604,7 +614,35 @@
     text-shadow: 1px 0px 0px rgba(0, 0, 0, 0.53);
     font-size: 20px;
     font-weight: 400;
-    margin-top: 7px;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+}
+
+.channel-label.master-label {
+    justify-content: center;
+}
+
+.delete-track-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    border-radius: 50%;
+}
+
+.delete-track-btn:hover {
+    opacity: 1;
+    background-color: rgba(244, 103, 31, 0.1);
+}
+
+.delete-track-btn svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* Section for master channel */
@@ -675,7 +713,7 @@
     font-size: 2.3rem;
     word-break: break-word;
     line-height: 1.1;
-    font-family: Helvetica, sans-serif; 
+    font-family: 'Poppins', sans-serif; 
 }
 
 .infor-description {
@@ -688,7 +726,7 @@
     margin-top: 20px;
     font-size: 1.1rem;
     font-weight: 600;
-    font-family: Helvetica, sans-serif; 
+    font-family: 'Poppins', sans-serif; 
 }
 
 .functions {
@@ -715,7 +753,7 @@
     font-size: 0.8rem;
     line-height: 1.4;
     color: #696969;
-    font-family: Helvetica, sans-serif; 
+    font-family: 'Poppins', sans-serif; 
 }
 
 .func-container {
@@ -777,12 +815,15 @@
     width: 90%;
     max-width: 500px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-family: 'Poppins', sans-serif;
   }
 
   .modal-content h2 {
     margin-top: 0;
     margin-bottom: 20px;
     color: #333;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
   }
   
   .form-group {
@@ -794,6 +835,7 @@
     margin-bottom: 6px;
     font-weight: 500;
     color: #555;
+    font-family: 'Poppins', sans-serif;
   }
 
   .form-group input,
@@ -803,6 +845,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
+    font-family: 'Poppins', sans-serif;
   }
   
   .form-group textarea {
@@ -824,6 +867,7 @@
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s;
+    font-family: 'Poppins', sans-serif;
   }
   
   .modal-button:disabled {
@@ -861,6 +905,7 @@
   .success-message {
     text-align: center;
     padding: 20px;
+    font-family: 'Poppins', sans-serif;
   }
   
   .success-message p {
@@ -872,6 +917,7 @@
   .soundscape-info {
     margin-top: 20px;
     text-align: left;
+    font-family: 'Poppins', sans-serif;
   }
   
   .soundscape-info p {
@@ -896,6 +942,7 @@
     white-space: nowrap;
     color: #F4671F;
     text-decoration: none;
+    font-family: 'Poppins', sans-serif;
   }
   
   .copy-button {
@@ -906,6 +953,7 @@
     border-radius: 4px;
     cursor: pointer;
     margin-left: 10px;
+    font-family: 'Poppins', sans-serif;
   }
   
   .copy-button:hover {
@@ -927,11 +975,17 @@
     color: #f44336;
     font-weight: 500;
     padding: 10px 0 20px;
+    font-family: 'Poppins', sans-serif;
   }
   
   .error-message p {
     margin-bottom: 16px;
   }
+
+.mute {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+}
 
 
 

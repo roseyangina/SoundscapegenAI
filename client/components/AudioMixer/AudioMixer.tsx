@@ -313,6 +313,25 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     );
   };
 
+  const handleDeleteTrack = (trackId: number) => {
+    // Stop the track if it's playing
+    const trackToDelete = tracks.find(track => track.id === trackId);
+    if (trackToDelete) {
+      trackToDelete.player.stop();
+      if (trackToDelete.pendingStartTimer) {
+        clearTimeout(trackToDelete.pendingStartTimer);
+      }
+      
+      // Disconnect from audio graph - use dispose which handles disconnection in Tone.js
+      trackToDelete.volume.dispose();
+      trackToDelete.panner.dispose();
+      trackToDelete.player.dispose();
+      
+      // Remove from tracks state
+      setTracks(prev => prev.filter(track => track.id !== trackId));
+    }
+  };
+
   const handleMuteAll = () => {
     setMuted(prevMuted => {
       const newMuted = !prevMuted;
@@ -406,47 +425,51 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     setIsSaving(true);
     setSaveSuccess(null);
 
-    try { // check if all sounds are downloaded
-      const downloadPromises = soundUrls.map(async (url, index) => {
+    try {
+      // Map over the current tracks state to download sounds and get settings
+      const downloadPromises = tracks.map(async (track) => {
+        const originalSoundId = soundIds[track.id] || 0; // Find original ID based on track index
         const soundObj: Sound = {
-          sound_number: String(index),
-          name: `Track ${index + 1}`,
-          description: `Sound from ${url}`,
-          sound_url: url,
-          preview_url: url,
-          freesound_id: String(soundIds[index] || '0')
+          sound_number: String(track.id + 1), // Use current track info
+          name: `Track ${track.id + 1}`,
+          description: `Sound from ${track.url}`,
+          sound_url: track.url,
+          preview_url: track.url,
+          freesound_id: String(originalSoundId)
         };
         
-        try { // download and return the sound
+        try { 
+          // Download sound if it's not already downloaded/created in the backend
+          // The downloadSound service should handle checking if it exists first
           const downloadResult = await downloadSound(soundObj);
           return {
-            original_id: soundIds[index] || 0,
-            downloaded_id: downloadResult.sound.sound_id,
-            volume: tracks[index].volumeLevel,
-            pan: tracks[index].panValue
+            downloaded_id: downloadResult.sound.sound_id, // Use the ID from the backend
+            volume: track.volumeLevel,
+            pan: track.panValue
           };
         } catch (error) {
-          console.error(`Error downloading sound ${index}:`, error);
-          return {
-            original_id: soundIds[index] || 0,
-            downloaded_id: soundIds[index] || 0,
-            volume: tracks[index].volumeLevel,
-            pan: tracks[index].panValue
-          };
+          console.error(`Error downloading/fetching sound for track ${track.id}:`, error);
+          return null; 
         }
       });
       
-      // wait for downloads to complete before creating soundscape
-      const downloadedSounds = await Promise.all(downloadPromises);
+      const downloadedResults = await Promise.all(downloadPromises);
       
-      // use the downloaded sound IDs for creating the soundscape
-      const soundsWithSettings = downloadedSounds.map(result => ({
-        sound_id: result.downloaded_id,
-        volume: result.volume,
-        pan: result.pan
-      }));
+      // Filter out any null results (failed downloads) and map to the expected structure
+      const soundsWithSettings = downloadedResults
+        .filter(result => result !== null)
+        .map(result => ({
+          sound_id: result!.downloaded_id,
+          volume: result!.volume,
+          pan: result!.pan
+        }));
 
-      // call the soundscape service to save the soundscape
+      if (soundsWithSettings.length === 0) {
+        alert("No valid sounds to save. Please ensure tracks are loaded properly.");
+        throw new Error("No sounds to save");
+      }
+
+      // Call the soundscape service to save the soundscape
       const result = await createSoundscape(
         soundscapeName,
         soundscapeDescription,
@@ -456,10 +479,11 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       console.log('Soundscape saved successfully:', result);
       setSaveSuccess(result);
       
-      // don't close the modal automatically - let the user see the success message and ID
+      // Keep the modal open to show success message
     } catch (error) {
       console.error('Error saving soundscape:', error);
-      setSaveSuccess(null);
+      setSaveSuccess(null); // Indicates failure
+      alert(`Failed to save soundscape: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSaving(false);
     }
@@ -627,20 +651,20 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
                         <div className='btn'>
                           <button onClick={() => togglePlay(track.id)}>
                             {track.isPlaying ? 
-                              <svg id="Play-Filled-Alt--Streamline-Carbon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" height="13" width="13">
-                                <desc>Play Filled Alt Streamline Icon: https://streamlinehq.com</desc>
-                                <defs></defs>
-                                <path d="M3.5 14a0.5 0.5 0 0 1 -0.5 -0.5V2.5a0.5 0.5 0 0 1 0.74095 -0.43815l10 5.5a0.5 0.5 0 0 1 0 0.87625l-10 5.5A0.50025 0.50025 0 0 1 3.5 14Z" fill="#5C5C5C" strokeWidth="0.5"></path>
-                                <path id="_Transparent_Rectangle_" d="M0 0h16v16H0Z" fill="none" strokeWidth="0.5"></path>
-                              </svg>
-                            :
                               <svg id="Pause-Filled--Streamline-Carbon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" height="14" width="14">
                                 <desc>Pause Filled Streamline Icon: https://streamlinehq.com</desc>
                                 <defs></defs>
                                 <title>pause--filled</title>
                                 <path d="M4.5 2.25h-0.75a0.75 0.75 0 0 0 -0.75 0.75v6a0.75 0.75 0 0 0 0.75 0.75h0.75a0.75 0.75 0 0 0 0.75 -0.75V3a0.75 0.75 0 0 0 -0.75 -0.75Z" fill="#5C5C5C" strokeWidth="0.375"></path><path d="M8.25 2.25h-0.75a0.75 0.75 0 0 0 -0.75 0.75v6a0.75 0.75 0 0 0 0.75 0.75h0.75a0.75 0.75 0 0 0 0.75 -0.75V3a0.75 0.75 0 0 0 -0.75 -0.75Z" fill="#5C5C5C" strokeWidth="0.375"></path>
                                 <path id="_Transparent_Rectangle_" d="M0 0h12v12H0Z" fill="none" strokeWidth="0.375"></path>
-                              </svg> 
+                              </svg>
+                            :
+                              <svg id="Play-Filled-Alt--Streamline-Carbon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" height="13" width="13">
+                                <desc>Play Filled Alt Streamline Icon: https://streamlinehq.com</desc>
+                                <defs></defs>
+                                <path d="M3.5 14a0.5 0.5 0 0 1 -0.5 -0.5V2.5a0.5 0.5 0 0 1 0.74095 -0.43815l10 5.5a0.5 0.5 0 0 1 0 0.87625l-10 5.5A0.50025 0.50025 0 0 1 3.5 14Z" fill="#5C5C5C" strokeWidth="0.5"></path>
+                                <path id="_Transparent_Rectangle_" d="M0 0h16v16H0Z" fill="none" strokeWidth="0.5"></path>
+                              </svg>
                             }
                             </button>                   
                         </div>
@@ -684,6 +708,20 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
 
                   <div className="channel-label">
                     <p className='label'>Track {track.id + 1}</p>
+                    {!readOnly && (
+                      <button 
+                        className="delete-track-btn" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTrack(track.id);
+                        }}
+                        title="Delete track"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                          <path fill="#f4671f" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </div>
             ))}
@@ -736,7 +774,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
                   </div>
 
                   <div className="channel-label master-label">
-                    <p className='label'>Mater</p>
+                    <p className='label'>Master</p>
                   </div>
               </div>
             </div>

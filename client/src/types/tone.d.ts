@@ -23,6 +23,9 @@ declare module 'tone' {
         volume: {
             value: number;
         };
+        pan: {
+            value: number;
+        };
     }
 
     export class Volume {
@@ -33,6 +36,7 @@ declare module 'tone' {
         volume: {
             value: number;
         };
+        mute: boolean;
     }
 
     export class Analyser {
