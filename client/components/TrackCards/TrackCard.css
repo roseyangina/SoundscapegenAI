@@ -99,9 +99,9 @@
     transform: translate(-56%, -60%);
     font-size: 3rem;
     color: #ffff;
-    opacity: 1;               /* Increase opacity from 0 or 0.5 to 1 */
-    text-shadow: 0 0 10px rgba(0,0,0,0.7); /* Add a shadow for extra contrast */
-    pointer-events: none;     /* Ensure clicks pass through to the image */
+    opacity: 1;               
+    text-shadow: 0 0 10px rgba(0,0,0,0.7); 
+    pointer-events: none;     
     transition: opacity 0.3s ease;
 }
   .track-control:hover .play-icon-overlay {
@@ -115,9 +115,9 @@
     height: 5px;
     background-color: #ccc;
     margin-top: 10px;
-    cursor: pointer; /* it's clickable */
+    cursor: pointer;
   }
-  /* Show progress bar when hovering over the entire track-card */
+  
   .track-card:hover .progress-bar-container {
     opacity: 1;
   }

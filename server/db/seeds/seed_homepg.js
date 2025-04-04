@@ -1,4 +1,4 @@
-require('dotenv').config(); // Ensure environment variables are loaded
+require('dotenv').config(); 
 
 exports.seed = async function(knex) {
     // Deletes ALL existing entries (if needed)
@@ -7,7 +7,7 @@ exports.seed = async function(knex) {
     // Inserts seed entries
     await knex('Sound').insert([
       {
-        sound_id: 1, // or use UUIDs / serial IDs depending on your setup
+        sound_id: 1, 
         name: 'Birds in the sky',
         description: 'Soundscape of the birds chirping on the tree',
         preview_url: 'https://cdn.freesound.org/previews/327/327444_4028726-hq.mp3',

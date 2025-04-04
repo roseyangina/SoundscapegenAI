@@ -1,5 +1,5 @@
 #!/bin/sh
-# Wait until Postgres is available 
+# Waiting until Postgres is available 
 echo "Running migrations..."
 npx knex migrate:latest --env development --knexfile=db/knexfile.js
 echo "Running seeds..."

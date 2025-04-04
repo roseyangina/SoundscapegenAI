@@ -24,6 +24,8 @@ export default function SoundscapePage() {
   const [soundVolumes, setSoundVolumes] = useState<number[]>([]);
   const [soundPans, setSoundPans] = useState<number[]>([]);
   const [trackNames, setTrackNames] = useState<string[]>([]);
+  //**change to track 
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     async function fetchSoundscapeDetails() {
@@ -62,6 +64,32 @@ export default function SoundscapePage() {
     }
   }, [soundscapeId]);
 
+  //function for Dowloand feature
+  async function downloadCombinedAudio() {
+    setDownloading(true);
+    try {
+      const res = await fetch(`http://localhost:3001/api/soundscapes/${soundscapeId}/download`);
+
+      if (!res.ok) throw new Error("Failed to generate merged combined audio");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `soundscape_${soundscapeId}.mp3`;
+      a.click();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error downloading merged soundscape:", err);
+      alert("Error downloading merged soundscape.");
+    } finally {
+      setDownloading(false); // track state
+    }
+  }
+  
+
   return (
     <div className="soundscape-page">
       <Navbar user={user} setUser={setUser} />
@@ -89,6 +117,13 @@ export default function SoundscapePage() {
             )}
             
             <div className="actions">
+              <button 
+                className={`download-button ${downloading ? 'downloading' : ''}`}
+                onClick={downloadCombinedAudio}
+                disabled={downloading}
+              >
+                {downloading ? "Preparing..." : "Download"}
+              </button>
               <Link 
                 href={`/mixer?soundscapeId=${soundscapeDetails.soundscape.soundscape_id}`} 
                 className="edit-button"
