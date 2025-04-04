@@ -19,7 +19,7 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache postgresql-client
+RUN apk add --no-cache postgresql-client ffmpeg
 
 COPY package.json package-lock.json ./
 RUN npm install

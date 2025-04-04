@@ -13,7 +13,6 @@ services:
       - python_nlp
     volumes:
       - ./client:/app
-      - /app/node_modules
       - /app/.next
     environment:
       - WATCHPACK_POLLING=true
@@ -36,8 +35,6 @@ services:
       - POSTGRES_DB=soundscape_db
       - FREESOUND_API_KEY=${FREESOUND_API_KEY}
     volumes:
-      - ./server:/app:delegated
-      - server_node_modules:/app/node_modules
       - ./server/public:/app/public
 
   python_nlp:

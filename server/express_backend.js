@@ -7,6 +7,10 @@ const port = 3001;
 const redisClient = require('./db/redis');
 const freesoundService = require('./services/freesoundService');
 
+//changed ** for combined audio download
+const ffmpeg = require('fluent-ffmpeg');
+const path = require('path');
+
 app.use(express.json())
 app.use(cors())
 app.use(express.static('public'));
@@ -481,6 +485,122 @@ app.get('/api/soundscapes/:id', async (req, res) => {
         });
     }
 });
+
+// To download tracks and finalized as one mp3
+app.get('/api/soundscapes/:id/download', async (req, res) => {
+
+    const soundscapeId = req.params.id;
+    // check if hit
+    console.log(`[DOWNLOAD ROUTE] Hit with soundscape ID: ${soundscapeId}`)
+
+    if (!soundscapeId) {
+      return res.status(400).json({ success: false, message: 'Soundscape ID is required' });
+    }
+  
+    const db = require('./db/config');
+  
+    try {
+      const soundsResult = await db.query(
+        `SELECT s.file_path, s.name, ss.volume, ss.pan
+         FROM "Sound" s
+         JOIN "SoundscapeSound" ss ON s.sound_id = ss.sound_id
+         WHERE ss.soundscape_id = $1`,
+        [soundscapeId]
+      );
+  
+      const rows = soundsResult.rows;
+      if (rows.length === 0) {
+        return res.status(404).json({ success: false, message: "No sounds found for this soundscape." });
+      }
+      
+      console.warn("No sounds found for this soundscape, skipping FFmpeg.");
+
+      const files = rows.map(r => {
+        // Using preview_url (since it's a local copy), fallback to file_path
+        const relativePath = (r.preview_url || r.file_path || '').replace(/^\/?/, '');
+        return path.join(__dirname, 'public', relativePath);
+      })
+
+      // check logs for any missing files
+      console.log("Files fetched from DB:", files);
+
+      files.forEach((filePath, idx) => {
+        const exists = fs.existsSync(filePath);
+        console.log(`File ${idx + 1}: ${filePath} -- ${exists ? 'File exists' : 'File is missing'}`);
+        });
+
+      // temp path for dowload
+      const outputPath = `/tmp/soundscape_${soundscapeId}.mp3`;
+      
+      console.log("Final output path:", JSON.stringify(outputPath));
+
+      const command = ffmpeg();
+  
+      const TARGET_DURATION = 90; // seconds
+      files.forEach(file => {
+        command.input(file)
+          .inputOptions([
+            `-stream_loop -1`,          // loop infinitely
+            `-t ${TARGET_DURATION}`     // but clip total to 90 seconds
+        ]);
+      });
+
+      // Generate per track filter chains for volume + pan
+      const volumePanFilters = rows.map((row, i) => {
+        const input = `[${i}:a]`;
+ 
+        // Clamp dB between -30 (soft) and 0 (loud)
+        const clampedDb = Math.max(-30, Math.min(0, row.volume ?? 0));
+        const linearVolume = Math.pow(10, clampedDb / 20).toFixed(4);
+
+        const pan = Math.max(-1.0, Math.min(1.0, row.pan ?? 0.0)); // Clamp pan to between -1 and 1
+
+        const left = ((1 - pan) / 2).toFixed(2);
+        const right = ((1 + pan) / 2).toFixed(2);
+        
+        console.log(`Track ${i} "${row.name}" volume: ${row.volume} dB → linear ${linearVolume}`); // check tracks
+
+        return `${input}volume=${linearVolume},pan=stereo|c0=${left}*FL|c1=${right}*FR[out${i}]`;
+      });
+
+      // Combine all filtered outputs using amix
+      const amixInputs = rows.map((_, i) => `[out${i}]`).join('');
+      const fullFilter = [
+        ...volumePanFilters,
+        `${amixInputs}amix=inputs=${rows.length}:duration=longest[amixout]`, 
+        `[amixout]volume=2.1[out]` // boost entire mix vol
+      ];
+
+      // Apply filter + save to temporary output path
+      command
+       .complexFilter(fullFilter, 'out')
+       .audioCodec('libmp3lame')
+       .output(outputPath)    
+       .on('start', cmd => {
+           console.log("FFmpeg command:", cmd);
+        })
+       .on('error', err => {
+            console.error('FFmpeg error:', err.message);
+            if (!res.headersSent) {
+              return res.status(500).json({ success: false, message: "Error mixing audio." });
+            }
+        })
+       .on('end', () => {
+           console.log('Merge finished');
+           res.download(outputPath, `soundscape_${soundscapeId}.mp3`, err => {
+             if (err) console.error('Send error:', err);
+             fs.unlink(outputPath, () => {});
+           });
+        })
+
+      console.log("Running FFmpeg...");
+      command.run();
+
+    } catch (error) {
+      console.error('Download error:', error);
+      res.status(500).json({ success: false, message: 'Error generating soundscape: ' + error.message });
+    }
+  });
 
 app.listen(port, async () => {
     console.log(`Node API is available on http://localhost:${port}`);

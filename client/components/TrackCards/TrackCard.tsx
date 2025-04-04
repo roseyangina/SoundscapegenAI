@@ -12,12 +12,12 @@ interface TrackCardProps {
   previewUrl?: string;
 }
 const TrackCard: React.FC<TrackCardProps> = ({
-  imageUrl,  // no default
-  altText,   // no default
-  date,      // no default
-  name,      // no default
-  description, // no default
-  previewUrl // no default
+  imageUrl,  
+  altText,   
+  date,      
+  name,      
+  description, 
+  previewUrl 
 }) => {
 
   const audioRef = useRef<HTMLAudioElement>(null);
