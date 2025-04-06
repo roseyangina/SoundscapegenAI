@@ -156,6 +156,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
           panValue: initialPan,
           pendingStartTimer: null,
           isMuted: false,
+          lastOffset: 0, // Added**
         };
       });
 
@@ -226,12 +227,19 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
   useEffect(() => {
     let counter: NodeJS.Timeout;
     if (!play) {
-      counter = setInterval(() => setTimer(timer => timer + 1), 1000);
+      //counter = setInterval(() => setTimer(timer => timer + 1), 1000);
+      // Use the first track’s offset as the base
+      const baseOffset = tracks[0]?.lastOffset ?? 0;
+      setTimer(baseOffset);
+
+      counter = setInterval(() => {
+        setTimer((prev) => prev + 1);
+      }, 1000);
     }
     return () => {
       clearInterval(counter);
     };
-  }, [play])
+  }, [play, tracks]) //changed**
 
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -378,6 +386,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       );
     }
     setPlay(false);
+    setTimer(tracks[0]?.lastOffset ?? 0); // sync timer before playing added**
     setTracks((prev) => {
       prev.forEach((t) => {
         t.player.stop();
@@ -415,6 +424,42 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       }));
     });
   };
+
+  //to rewind and fast forward by 1o
+  const seekAll = (offsetSeconds: number) => {
+    let updatedOffset = 0; // capture this from the first track
+    setTracks((prevTracks) => {
+      prevTracks.forEach((track, index) => {
+        const player = track.player;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const typedPlayer = player as any;
+        const duration = typedPlayer.buffer.duration;
+        
+        const newOffset = Math.round(
+          Math.max(0, Math.min((track.lastOffset ?? 0) + offsetSeconds, duration))
+        );
+  
+        if (play) {
+          typedPlayer.stop();
+          typedPlayer.start("+0.1", newOffset);
+        }        
+
+        track.lastOffset = newOffset;
+
+        // Capture the offset from the first track only
+        if (index === 0) updatedOffset = newOffset;
+        console.log(`[SEEK] ${play ? 'Playing' : 'Paused'} – newOffset: ${newOffset}`);
+      });
+  
+      return [...prevTracks];
+    });
+    // Update the progress UI
+    setTimer(Math.round(updatedOffset || 0));
+  };  
+ 
+
+  const rewind10 = () => seekAll(-10);
+  const forward10 = () => seekAll(10);
 
   const handleFinalize = () => {
     setShowSaveModal(true);
@@ -563,7 +608,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
           </div>
           
           <div className="player-controls">
-            <button className="btn-icon">
+            <button className="btn-icon" onClick={rewind10}>
                 <svg id="Rewind-10--Streamline-Carbon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" height="32" width="32">
                     <desc>Rewind 10 Streamline Icon: https://streamlinehq.com</desc>
                     <defs></defs>
@@ -596,7 +641,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
               </button>
             }
   
-            <button className="btn-icon">
+            <button className="btn-icon" onClick={forward10}>
                 <svg id="Forward-10--Streamline-Carbon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" height="32" width="32">
                     <desc>Forward 10 Streamline Icon: https://streamlinehq.com</desc>
                     <defs></defs>
