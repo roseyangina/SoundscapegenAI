@@ -6,6 +6,7 @@ const app = express()
 const port = 3001;
 const redisClient = require('./db/redis');
 const freesoundService = require('./services/freesoundService');
+const { cacheFetch } = require('./db/cache');
 
 //changed ** for combined audio download
 const ffmpeg = require('fluent-ffmpeg');
@@ -439,6 +440,7 @@ app.post('/api/soundscapes', async (req, res) => {
 // Get a soundscape by ID with its associated sounds
 app.get('/api/soundscapes/:id', async (req, res) => {
     const soundscapeId = req.params.id;
+    const redisKey = `soundscape:${soundscapeId}`;
     
     if (!soundscapeId) {
         return res.status(400).json({
@@ -450,33 +452,36 @@ app.get('/api/soundscapes/:id', async (req, res) => {
     const db = require('./db/config');
     
     try {
-        const soundscapeResult = await db.query( // retrieve soundscape from db
-            'SELECT * FROM "Soundscape" WHERE soundscape_id = $1',
-            [soundscapeId]
-        );
+        const result = await cacheFetch(redisKey, async () => {
+            
+            const soundscapeResult = await db.query( // retrieve soundscape from db
+                'SELECT * FROM "Soundscape" WHERE soundscape_id = $1',
+                [soundscapeId]
+            );
+            
+            if (soundscapeResult.rows.length === 0) { // if soundscape not found
+                throw new Error ('Soundscape not found')
+            }
+            
+            const soundscape = soundscapeResult.rows[0];
+            
+            const soundsResult = await db.query( // retrieve each sound in the soundscape
+                `SELECT s.*, ss.volume, ss.pan 
+                FROM "Sound" s
+                JOIN "SoundscapeSound" ss ON s.sound_id = ss.sound_id
+                WHERE ss.soundscape_id = $1`,
+                [soundscapeId]
+            );
         
-        if (soundscapeResult.rows.length === 0) { // if soundscape not found
-            return res.status(404).json({
-                success: false,
-                message: 'Soundscape not found'
-            });
-        }
-        
-        const soundscape = soundscapeResult.rows[0];
-        
-        const soundsResult = await db.query( // retrieve each sound in the soundscape
-            `SELECT s.*, ss.volume, ss.pan 
-             FROM "Sound" s
-             JOIN "SoundscapeSound" ss ON s.sound_id = ss.sound_id
-             WHERE ss.soundscape_id = $1`,
-            [soundscapeId]
-        );
-        
-        return res.status(200).json({
-            success: true,
-            soundscape,
-            sounds: soundsResult.rows
+            return {
+                success: true,
+                soundscape,
+                sounds: soundsResult.rows
+            };
         });
+
+        res.status(200).json(result);
+
     } catch (error) {
         console.error('Error getting soundscape:', error);
         return res.status(500).json({
@@ -491,7 +496,7 @@ app.get('/api/soundscapes/:id/download', async (req, res) => {
 
     const soundscapeId = req.params.id;
     // check if hit
-    console.log(`[DOWNLOAD ROUTE] Hit with soundscape ID: ${soundscapeId}`)
+    console.log(`Download route; Hit with soundscape ID: ${soundscapeId}`)
 
     if (!soundscapeId) {
       return res.status(400).json({ success: false, message: 'Soundscape ID is required' });
@@ -521,10 +526,18 @@ app.get('/api/soundscapes/:id/download', async (req, res) => {
         return path.join(__dirname, 'public', relativePath);
       })
 
+      //  Filter out any missing files, e.g those deleted
+      const existingRows = rows.filter((_, i) => fs.existsSync(files[i]));
+      const existingFiles = files.filter(fs.existsSync);
+
+      if (existingFiles.length === 0) {
+        return res.status(404).json({ success: false, message: "No valid sounds found for merging" });
+      }
+
       // check logs for any missing files
       console.log("Files fetched from DB:", files);
 
-      files.forEach((filePath, idx) => {
+      existingFiles.forEach((filePath, idx) => {
         const exists = fs.existsSync(filePath);
         console.log(`File ${idx + 1}: ${filePath} -- ${exists ? 'File exists' : 'File is missing'}`);
         });
@@ -537,7 +550,7 @@ app.get('/api/soundscapes/:id/download', async (req, res) => {
       const command = ffmpeg();
   
       const TARGET_DURATION = 90; // seconds
-      files.forEach(file => {
+      existingFiles.forEach(file => {
         command.input(file)
           .inputOptions([
             `-stream_loop -1`,          // loop infinitely
@@ -546,7 +559,7 @@ app.get('/api/soundscapes/:id/download', async (req, res) => {
       });
 
       // Generate per track filter chains for volume + pan
-      const volumePanFilters = rows.map((row, i) => {
+      const volumePanFilters = existingRows.map((row, i) => {
         const input = `[${i}:a]`;
  
         // Clamp dB between -30 (soft) and 0 (loud)
@@ -564,11 +577,11 @@ app.get('/api/soundscapes/:id/download', async (req, res) => {
       });
 
       // Combine all filtered outputs using amix
-      const amixInputs = rows.map((_, i) => `[out${i}]`).join('');
+      const amixInputs = existingRows.map((_, i) => `[out${i}]`).join('');
       const fullFilter = [
         ...volumePanFilters,
         `${amixInputs}amix=inputs=${rows.length}:duration=longest[amixout]`, 
-        `[amixout]volume=2.1[out]` // boost entire mix vol
+        `[amixout]volume=3.0[out]` // boost entire mix vol
       ];
 
       // Apply filter + save to temporary output path
@@ -593,7 +606,7 @@ app.get('/api/soundscapes/:id/download', async (req, res) => {
            });
         })
 
-      console.log("Running FFmpeg...");
+      console.log("Running FFmpeg");
       command.run();
 
     } catch (error) {

@@ -72,12 +72,12 @@ async function downloadAndSaveSound(freesoundId, sourceUrl, name, description, p
   }
 
   // We try preview URL if full download failed
-  if (!downloaded && previewUrl) { //**added && previewurl */
+  if (!downloaded && previewUrl) { 
     if (previewUrl) {
       console.log(`Full sound download failed. Using preview URL instead: ${previewUrl}`);
       downloadUrl = previewUrl;
       try {
-        await downloadFile(previewUrl, filePath); //changed** downloadurl to preview
+        await downloadFile(previewUrl, filePath); 
         console.log(`Preview download successful`);
         downloaded = true;
       } catch (error) {
