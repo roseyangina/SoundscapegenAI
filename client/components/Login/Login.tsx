@@ -11,7 +11,6 @@ const Login: React.FC<LoginProps> = ({ setUser }) => {
 
   const handleGoogleLogin = async () => {
     try {
-      // Open a popup window for Google OAuth
       const width = 500;
       const height = 600;
       const left = window.screenX + (window.outerWidth - width) / 2;
@@ -28,26 +27,16 @@ const Login: React.FC<LoginProps> = ({ setUser }) => {
         return;
       }
 
-      // Listen for messages from the popup
       const messageHandler = (event: MessageEvent) => {
-        // Only accept messages from our server domain
         if (event.origin !== 'http://localhost:3001') return;
         
         if (event.data.token && event.data.user) {
-          // Store the token and user data
           localStorage.setItem('token', event.data.token);
           localStorage.setItem('user', JSON.stringify(event.data.user));
           
-          // Close the popup
           if (popup) popup.close();
-          
-          // Remove the event listener
           window.removeEventListener('message', messageHandler);
-          
-          // Force a page reload
-          setTimeout(() => {
-            window.location.href = window.location.href;
-          }, 100);
+          window.location.reload();
         }
       };
 
