@@ -26,34 +26,9 @@ import React, {
     const [screen, setScreen] = useState<ScreenType>(null);
     const [dropdown, setDropdown] = useState<boolean>(false);
     const [userEmail, setUserEmail] = useState<string | null>(null);
-    const [userEmail, setUserEmail] = useState<string | null>(null);
   
     // Use a ref to detect clicks outside of the dropdown
     const dropdownRef = useRef<HTMLDivElement>(null);
-  
-    // Fetch user status when component mounts
-    useEffect(() => {
-      const fetchUserStatus = async () => {
-        try {
-          const response = await fetch('http://localhost:3001/api/auth/status', {
-            credentials: 'include'
-          });
-          const data = await response.json();
-          
-          if (data.isAuthenticated && data.user) {
-            setUserEmail(data.user.email);
-            setUser(true);
-          } else {
-            setUserEmail(null);
-            setUser(false);
-          }
-        } catch (error) {
-          console.error('Error fetching user status:', error);
-        }
-      };
-  
-      fetchUserStatus();
-    }, [setUser]);
   
     // Fetch user status when component mounts
     useEffect(() => {

@@ -23,25 +23,35 @@ const Login: React.FC<LoginProps> = ({ setUser }) => {
         `width=${width},height=${height},left=${left},top=${top}`
       );
       
+      if (!popup) {
+        console.error('Popup blocked. Please allow popups for this site.');
+        return;
+      }
+
       // Listen for messages from the popup
-      window.addEventListener('message', async (event) => {
+      const messageHandler = (event: MessageEvent) => {
         // Only accept messages from our server domain
         if (event.origin !== 'http://localhost:3001') return;
         
-        // Close the popup
-        if (popup) popup.close();
-        
         if (event.data.token && event.data.user) {
-          // Store the token in localStorage
+          // Store the token and user data
           localStorage.setItem('token', event.data.token);
-          // Store user data
           localStorage.setItem('user', JSON.stringify(event.data.user));
           
-          setUser(true);
-          // Use Next.js router to refresh
-          router.refresh();
+          // Close the popup
+          if (popup) popup.close();
+          
+          // Remove the event listener
+          window.removeEventListener('message', messageHandler);
+          
+          // Force a page reload
+          setTimeout(() => {
+            window.location.href = window.location.href;
+          }, 100);
         }
-      }, { once: true });
+      };
+
+      window.addEventListener('message', messageHandler);
     } catch (err) {
       console.error('Google login error:', err);
     }
