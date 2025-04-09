@@ -24,4 +24,5 @@ export interface AudioMixexProps {
     title?: string | null; // Optional title for the mixer
     readOnly?: boolean; // Whether the mixer is in read-only mode
     trackNames?: string[]; // Array of descriptive names for each track
+    soundscapeId?: string;
 } 

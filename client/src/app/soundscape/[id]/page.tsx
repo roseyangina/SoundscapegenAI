@@ -37,7 +37,7 @@ export default function SoundscapePage() {
           setSoundscapeDetails(data);
           
           // Extract data for AudioMixer
-          const urls = data.sounds.map(sound => `http://localhost:3001${sound.file_path}`);
+          const urls = data.sounds.map(sound => sound.file_path ? `http://localhost:3001${sound.file_path}` : (sound.preview_url || ''));
           const ids = data.sounds.map(sound => sound.sound_id);
           const volumes = data.sounds.map(sound => sound.volume || 1.0);
           const pans = data.sounds.map(sound => sound.pan || 0.0);

@@ -29,7 +29,7 @@ export async function downloadSound(sound: Sound) {
       sourceUrl: sound.sound_url,
       name: sound.name,
       description: sound.description,
-      previewUrl: sound.preview_url
+      previewUrl: sound.preview_url || ''
     })
   });
 
@@ -38,6 +38,54 @@ export async function downloadSound(sound: Sound) {
   }
 
   return await downloadRes.json();
+}
+
+export async function searchSingleSound(query: string): Promise<Sound | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/sounds/search`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ query })
+    });
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        console.log("No sound found for query:", query);
+        return null;
+      }
+      throw new Error(`Failed to search for sound: ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (!data.success || !data.sound) {
+      return null;
+    }
+    return data.sound;
+  } catch (error) {
+    console.error("Error searching for sound:", error);
+    throw error;
+  }
+}
+
+export async function addSoundToSoundscape(
+  soundscapeId: number, 
+  soundData: { sound_id: number, volume: number, pan: number }
+): Promise<SoundscapeDetails> {
+  const res = await fetch(`${API_BASE_URL}/api/soundscapes/${soundscapeId}/sounds`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ sound: soundData })
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to add sound to soundscape: ${res.status}`);
+  }
+
+  return await res.json();
 }
 
 export async function createSoundscape(name: string, description: string, soundIds: Array<{ sound_id: number, volume: number, pan: number }>): Promise<SoundscapeResponse> {

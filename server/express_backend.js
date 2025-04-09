@@ -339,6 +339,63 @@ app.post('/api/sounds/download', async (req, res) => {
     }
 });
 
+// Search for a single sound using a query
+app.post('/api/sounds/search', async (req, res) => {
+    const { query, filter } = req.body;
+    
+    if (!query) {
+        return res.status(400).json({
+            success: false,
+            message: 'Query is required'
+        });
+    }
+    
+    try {
+        // Use the freesoundService to search directly with advanced options
+        const searchOptions = {
+            // Default to prioritizing shorter sounds (under 60 seconds)
+            filter: filter || "duration:[0 TO 60]",
+            // Sort by relevance (score)
+            sort: "score"
+        };
+        
+        const freesoundResult = await freesoundService.searchFreesound(query, 1, searchOptions);
+        
+        if (!freesoundResult.results || freesoundResult.results.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'No sound found for the given query'
+            });
+        }
+        
+        // Get the first result
+        const sound = freesoundResult.results[0];
+        
+        // Format the response to match what our front-end expects
+        const soundResponse = {
+            sound_number: "Sound 1",
+            name: sound.name || "Unnamed Sound",
+            description: sound.description || "No description available",
+            sound_url: sound.download || "",
+            preview_url: sound.preview_url || "",
+            freesound_id: sound.id,
+            duration: sound.duration || 0,
+            license: sound.license || ""
+        };
+        
+        return res.status(200).json({
+            success: true,
+            sound: soundResponse
+        });
+    } catch (error) {
+        console.error('Error searching for sound:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error searching for sound: ' + error.message
+        });
+    }
+});
+
 // Retrieve all sounds from the database
 app.get('/api/sounds', async (req, res) => {
     try {
@@ -487,6 +544,119 @@ app.get('/api/soundscapes/:id', async (req, res) => {
         return res.status(500).json({
             success: false,
             message: 'Error getting soundscape: ' + error.message
+        });
+    }
+});
+
+// Add a sound to an existing soundscape
+app.post('/api/soundscapes/:id/sounds', async (req, res) => {
+    const soundscapeId = req.params.id;
+    const { sound } = req.body;
+    
+    if (!sound || !sound.sound_id) {
+        return res.status(400).json({
+            success: false,
+            message: 'Sound ID is required'
+        });
+    }
+    
+    const db = require('./db/config');
+    
+    try {
+        await db.query('BEGIN');
+        
+        // Check if the soundscape exists
+        const soundscapeResult = await db.query(
+            'SELECT * FROM "Soundscape" WHERE soundscape_id = $1',
+            [soundscapeId]
+        );
+        
+        if (soundscapeResult.rows.length === 0) {
+            await db.query('ROLLBACK');
+            return res.status(404).json({
+                success: false,
+                message: 'Soundscape not found'
+            });
+        }
+        
+        // Count how many sounds the soundscape currently has
+        const countResult = await db.query(
+            'SELECT COUNT(*) FROM "SoundscapeSound" WHERE soundscape_id = $1',
+            [soundscapeId]
+        );
+        
+        const soundCount = parseInt(countResult.rows[0].count);
+        
+        if (soundCount >= 6) {
+            await db.query('ROLLBACK');
+            return res.status(400).json({
+                success: false,
+                message: 'Soundscape already has the maximum of 6 sounds'
+            });
+        }
+        
+        // Check if the sound exists
+        const soundResult = await db.query(
+            'SELECT * FROM "Sound" WHERE sound_id = $1',
+            [sound.sound_id]
+        );
+        
+        if (soundResult.rows.length === 0) {
+            await db.query('ROLLBACK');
+            return res.status(404).json({
+                success: false,
+                message: 'Sound not found'
+            });
+        }
+        
+        // Check if the sound is already in the soundscape
+        const existingResult = await db.query(
+            'SELECT * FROM "SoundscapeSound" WHERE soundscape_id = $1 AND sound_id = $2',
+            [soundscapeId, sound.sound_id]
+        );
+        
+        if (existingResult.rows.length > 0) {
+            // Update the existing relationship with new volume and pan
+            await db.query(
+                'UPDATE "SoundscapeSound" SET volume = $1, pan = $2 WHERE soundscape_id = $3 AND sound_id = $4',
+                [sound.volume || 1.0, sound.pan || 0.0, soundscapeId, sound.sound_id]
+            );
+        } else {
+            // Add the new sound to the soundscape
+            await db.query(
+                'INSERT INTO "SoundscapeSound" (soundscape_id, sound_id, volume, pan) VALUES ($1, $2, $3, $4)',
+                [soundscapeId, sound.sound_id, sound.volume || 1.0, sound.pan || 0.0]
+            );
+        }
+        
+        await db.query('COMMIT');
+        
+        // Get the updated soundscape details
+        const soundscapeData = await db.query(
+            'SELECT * FROM "Soundscape" WHERE soundscape_id = $1',
+            [soundscapeId]
+        );
+        
+        const soundsData = await db.query(
+            `SELECT s.*, ss.volume, ss.pan 
+            FROM "Sound" s
+            JOIN "SoundscapeSound" ss ON s.sound_id = ss.sound_id
+            WHERE ss.soundscape_id = $1`,
+            [soundscapeId]
+        );
+        
+        return res.status(200).json({
+            success: true,
+            message: 'Sound added to soundscape successfully',
+            soundscape: soundscapeData.rows[0],
+            sounds: soundsData.rows
+        });
+    } catch (error) {
+        await db.query('ROLLBACK');
+        console.error('Error adding sound to soundscape:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error adding sound to soundscape: ' + error.message
         });
     }
 });

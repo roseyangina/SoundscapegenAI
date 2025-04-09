@@ -7,8 +7,7 @@ import { getContext } from "tone";
 
 import { AudioTrack, AudioMixexProps } from './types';
 import { SoundscapeResponse, Sound } from '@/app/types/soundscape';
-import { createSoundscape } from '@/app/services/soundscapeService';
-import { downloadSound } from '@/app/services/soundscapeService';
+import { createSoundscape, downloadSound, searchSingleSound, addSoundToSoundscape } from '@/app/services/soundscapeService';
 
 // We create a cache to store Tone.Player instances keyed by their URL. This is to ensure that each sound loads exactly once
 const playerCache = new Map<string, Tone.Player>();
@@ -69,16 +68,21 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
   initialPans = [],
   title,
   readOnly = false,
-  trackNames : initialTrackNames = [] // renamed prop
+  trackNames : initialTrackNames = [], // renamed prop
+  soundscapeId
 }) => {
 
   const [tracks, setTracks] = useState<AudioTrack[]>([]);
   const [trackNames, setTrackNames] = useState<string[]>(initialTrackNames); // local state 
-  console.log("Track names received:", trackNames); //log to debug tracknames
   const [masterVolume, setMasterVolume] = useState<number>(0);
   const [loadedCount, setLoadedCount] = useState<number>(0);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [showSaveModal, setShowSaveModal] = useState<boolean>(false);
+  const [showAddSoundModal, setShowAddSoundModal] = useState<boolean>(false);
+  const [soundQuery, setSoundQuery] = useState<string>("");
+  const [isSearchingSound, setIsSearchingSound] = useState<boolean>(false);
+  const [searchedSound, setSearchedSound] = useState<Sound | null>(null);
+  const [isAddingSound, setIsAddingSound] = useState<boolean>(false);
   const [soundscapeName, setSoundscapeName] = useState<string>("");
   const [soundscapeDescription, setSoundscapeDescription] = useState<string>("");
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -229,7 +233,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     let counter: NodeJS.Timeout;
     if (!play) {
       //counter = setInterval(() => setTimer(timer => timer + 1), 1000);
-      // Use the first track’s offset as the base
+      // Use the first track's offset as the base
       const baseOffset = tracks[0]?.lastOffset ?? 0;
       setTimer(baseOffset);
 
@@ -360,7 +364,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       // Also update trackNames state
       setTrackNames(prev => {
         const updatedNames = [...prev];
-        updatedNames.splice(trackId, 1); // remove the deleted track’s name
+        updatedNames.splice(trackId, 1); // remove the deleted track's name
         return updatedNames;
       });
     }
@@ -603,6 +607,160 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     setSoundscapeName("");
     setSoundscapeDescription("");
     setSaveSuccess(null);
+  };
+
+  const handleShowAddSoundModal = () => {
+    setShowAddSoundModal(true);
+    setSoundQuery("");
+  };
+
+  const handleCancelAddSound = () => {
+    setShowAddSoundModal(false);
+    setSoundQuery("");
+    setIsSearchingSound(false);
+    setSearchedSound(null);
+    setIsAddingSound(false);
+  };
+
+  const handleSearchSound = async () => {
+    if (!soundQuery.trim()) {
+      alert("Please enter a search term");
+      return;
+    }
+
+    setIsSearchingSound(true);
+    setSearchedSound(null);
+    
+    try {
+      // Search for a sound using the query
+      const sound = await searchSingleSound(soundQuery);
+      
+      if (!sound) {
+        // This is expected when no sound is found
+        alert(`No sound found for "${soundQuery}". Please try a different search term.`);
+        setIsSearchingSound(false);
+        return;
+      }
+      
+      // Store the found sound in state
+      setSearchedSound(sound);
+      
+    } catch (error) {
+      console.error("Error searching for sound:", error);
+      alert(`Error searching for sound: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSearchingSound(false);
+    }
+  };
+
+  const handleAddSound = async () => {
+    if (!searchedSound) {
+      return;
+    }
+    
+    setIsAddingSound(true);
+    
+    try {
+      // Download the sound
+      const downloadResult = await downloadSound(searchedSound);
+      
+      if (!downloadResult.success) {
+        throw new Error("Failed to download sound");
+      }
+      
+      // Get the soundscape ID from props or URL
+      let scapeId = soundscapeId;
+      
+      // If not provided in props, try to get from URL
+      if (!scapeId) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlScapeId = urlParams.get('soundscapeId');
+        if (urlScapeId) {
+          scapeId = urlScapeId;
+        }
+      }
+      
+      // If we're editing an existing soundscape, add the sound to it in the database
+      if (scapeId) {
+        try {
+          // Add the sound to the soundscape
+          const addResult = await addSoundToSoundscape(parseInt(scapeId), {
+            sound_id: downloadResult.sound.sound_id,
+            volume: 1.0,
+            pan: 0.0
+          });
+          
+          if (!addResult.success) {
+            throw new Error("Failed to add sound to soundscape");
+          }
+        } catch (error) {
+          console.error("Error adding sound to existing soundscape:", error);
+          // Continue even if this fails - we'll add it to the UI directly
+        }
+      }
+      
+      // Either way, add the sound to the UI
+      // Create a new Tone.Player
+      const newPlayer = new Tone.Player({
+        url: downloadResult.sound.file_path ? `http://localhost:3001${downloadResult.sound.file_path}` : (searchedSound.preview_url || ''),
+        loop: true,
+        autostart: false,
+        onload: () => {
+          setLoadedCount(prev => prev + 1);
+        }
+      });
+      
+      // Create new panner and volume nodes
+      const newPanner = new Tone.Panner(0);
+      const newVolume = new Tone.Volume(0);
+      
+      // Connect the audio nodes
+      newPlayer.connect(newPanner);
+      newPanner.connect(newVolume);
+      if (masterVolumeNode.current) {
+        newVolume.connect(masterVolumeNode.current);
+      }
+      
+      // Add to the tracklist
+      const newTrack: AudioTrack = {
+        id: tracks.length,
+        url: downloadResult.sound.file_path ? `http://localhost:3001${downloadResult.sound.file_path}` : (searchedSound.preview_url || ''),
+        player: newPlayer,
+        panner: newPanner,
+        volume: newVolume,
+        isPlaying: false,
+        volumeLevel: 0,
+        panValue: 0,
+        pendingStartTimer: null,
+        isMuted: false,
+        lastOffset: 0
+      };
+      
+      // Add the new track to tracks state
+      setTracks(prev => [...prev, newTrack]);
+      
+      // Add the track name
+      setTrackNames(prev => [...prev, searchedSound.name]);
+      
+      // Add to the soundIds list
+      if (downloadResult.sound.sound_id) {
+        const newSoundId = downloadResult.sound.sound_id;
+        soundIds.push(newSoundId);
+      }
+      
+      // Close the modal
+      setShowAddSoundModal(false);
+      setSearchedSound(null);
+      
+      // Let the user know the sound was added successfully
+      alert(`"${searchedSound.name}" added to your soundscape!`);
+      
+    } catch (error) {
+      console.error("Error adding sound:", error);
+      alert(`Error adding sound: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsAddingSound(false);
+    }
   };
 
   if (!isLoaded) {  // draw loading spinner until all tracks are loaded
@@ -915,12 +1073,21 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
               <svg id="Save-Annotation--Streamline-Carbon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><desc>Save Annotation Streamline Icon: https://streamlinehq.com</desc><defs></defs><title>watson-health--save--annotation</title><path d="m21.56 15.1 -3.48 -4.35a2 2 0 0 0 -1.56 -0.75H4a2 2 0 0 0 -2 2v16a2 2 0 0 0 2 2h16a2 2 0 0 0 2 -2V16.35a2 2 0 0 0 -0.44 -1.25ZM9 12h6v3H9Zm6 16H9v-6h6Zm2 0v-6a2 2 0 0 0 -2 -2H9a2 2 0 0 0 -2 2v6H4V12h3v3a2 2 0 0 0 2 2h6a2 2 0 0 0 2 -2v-2.4l3 3.75V28Z" fill="#f4671f" strokeWidth="1"></path><path d="M28 20h-3v-2h3V4H8v3H6V4a2 2 0 0 1 2 -2h20a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2Z" fill="#f4671f" strokeWidth="1"></path><path d="M20 6h6v2h-6Z" fill="#f4671f" strokeWidth="1"></path><path d="M22 10h4v2h-4Z" fill="#f4671f" strokeWidth="1"></path><path id="_Transparent_Rectangle_" d="M0 0h32v32H0Z" fill="none" strokeWidth="1"></path></svg>
               <button >Finalize</button>
             </div>
-          )
-          }
+          )}
           <div className='func-container'>
             <svg id="Share--Streamline-Carbon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><desc>Share Streamline Icon: https://streamlinehq.com</desc><defs></defs><title>share</title><path d="M23 20a5 5 0 0 0-3.89 1.89l-7.31-4.57a4.46 4.46 0 0 0 0-2.64l7.31-4.57A5 5 0 1 0 18 7a4.79 4.79 0 0 0 .2 1.32l-7.31 4.57a5 5 0 1 0 0 6.22l7.31 4.57A4.79 4.79 0 0 0 18 25a5 5 0 1 0 5-5Zm0-16a3 3 0 1 1-3 3 3 3 0 0 1 3-3ZM7 19a3 3 0 1 1 3-3 3 3 0 0 1-3 3Zm16 9a3 3 0 1 1 3-3 3 3 0 0 1-3 3Z" fill="#f4671f"></path><path id="_Transparent_Rectangle_" transform="rotate(-90 16 16)" d="M0 0h32v32H0Z" fill="none"></path></svg>
             <button>Share</button>
           </div>
+          
+          {!readOnly && tracks.length < 6 && (
+            <div className='func-container add-sound' onClick={handleShowAddSoundModal}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+                <path d="M16 4c6.6 0 12 5.4 12 12s-5.4 12-12 12S4 22.6 4 16 9.4 4 16 4m0-2C8.3 2 2 8.3 2 16s6.3 14 14 14 14-6.3 14-14S23.7 2 16 2z" fill="#f4671f"/>
+                <path d="M24 15h-7V8h-2v7H8v2h7v7h2v-7h7z" fill="#f4671f"/>
+              </svg>
+              <button>Add Sound {`(${tracks.length}/6)`}</button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1036,6 +1203,96 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
            </div>
          </div>
        )}
+
+    {/* Add Sound Modal - Only show in edit mode */}
+    {!readOnly && showAddSoundModal && (
+      <div className="modal-overlay">
+        <div className="modal-content">
+          <h2>Add Sound to Soundscape</h2>
+          <p>You have {tracks.length}/6 sounds in your soundscape.</p>
+          
+          {!searchedSound ? (
+            <>
+              <div className="form-group">
+                <label htmlFor="sound-query">What sound are you looking for?</label>
+                <input
+                  id="sound-query"
+                  type="text"
+                  value={soundQuery}
+                  onChange={(e) => setSoundQuery(e.target.value)}
+                  placeholder="E.g. forest birds, ocean waves, rain"
+                  disabled={isSearchingSound}
+                />
+              </div>
+              
+              <div className="modal-actions">
+                <button 
+                  className="modal-button cancel" 
+                  onClick={handleCancelAddSound}
+                  disabled={isSearchingSound}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="modal-button search" 
+                  onClick={handleSearchSound}
+                  disabled={isSearchingSound}
+                >
+                  {isSearchingSound ? 'Searching...' : 'Find Sound'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="sound-result">
+                <h3>{searchedSound.name}</h3>
+                <div className="sound-meta">
+                  {searchedSound.duration && (
+                    <span className="sound-duration">Duration: {Math.round(searchedSound.duration)} seconds</span>
+                  )}
+                  {searchedSound.license && (
+                    <span className="sound-license">License: {searchedSound.license}</span>
+                  )}
+                </div>
+                <p>{searchedSound.description.length > 150 
+                  ? `${searchedSound.description.substring(0, 150)}...` 
+                  : searchedSound.description}
+                </p>
+                {searchedSound.preview_url && (
+                  <div className="preview-audio">
+                    <label className="preview-label">Preview:</label>
+                    <audio 
+                      src={searchedSound.preview_url} 
+                      controls 
+                      controlsList="nodownload"
+                      style={{ width: '100%', marginTop: '10px' }}
+                      autoPlay
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <div className="modal-actions">
+                <button 
+                  className="modal-button cancel" 
+                  onClick={handleCancelAddSound}
+                  disabled={isAddingSound}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="modal-button save" 
+                  onClick={handleAddSound}
+                  disabled={isAddingSound}
+                >
+                  {isAddingSound ? 'Adding Sound...' : 'Add to Soundscape'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    )}
   </div>
   );
 };
