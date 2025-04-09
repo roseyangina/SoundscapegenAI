@@ -68,12 +68,12 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
   initialPans = [],
   title,
   readOnly = false,
-  trackNames = []
+  trackNames : initialTrackNames = [] // renamed prop
 }) => {
-  // Add console log to debug track names
-  console.log("Track names received:", trackNames);
-  
+
   const [tracks, setTracks] = useState<AudioTrack[]>([]);
+  const [trackNames, setTrackNames] = useState<string[]>(initialTrackNames); // local state 
+  console.log("Track names received:", trackNames); //log to debug tracknames
   const [masterVolume, setMasterVolume] = useState<number>(0);
   const [loadedCount, setLoadedCount] = useState<number>(0);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
@@ -239,7 +239,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     return () => {
       clearInterval(counter);
     };
-  }, [play, tracks]) //changed**
+  }, [play, tracks])
 
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -258,7 +258,9 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
         }
         const timerId = window.setTimeout(() => {
           try {
-            track.player.start();
+            //track.player.start();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (track.player as any).start(undefined, track.lastOffset ?? 0); // Starts from offset
           } catch (err) {
             console.error(`Error .start() track ${track.id}:`, err);
           }
@@ -340,7 +342,26 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       trackToDelete.player.dispose();
       
       // Remove from tracks state
-      setTracks(prev => prev.filter(track => track.id !== trackId));
+      // Rebuild tracks array with re-indexed IDs
+      setTracks(prev => {
+        const updated = prev
+          .filter(track => track.id !== trackId)
+          .map((track, i) => ({
+            ...track,
+            id: i,
+            lastOffset: track.lastOffset ?? 0
+          }));
+
+        console.log("Track deleted. Remaining tracks:", updated);
+
+        return updated;
+      });
+      // Also update trackNames state
+      setTrackNames(prev => {
+        const updatedNames = [...prev];
+        updatedNames.splice(trackId, 1); // remove the deleted track’s name
+        return updatedNames;
+      });
     }
   };
 
@@ -379,6 +400,23 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     }
   };
 
+  // Sync lastOffset with timer every second while playing
+  // Ensures each track remembers the current position for accurate seeking when paused or resumed
+  useEffect(() => {
+    if (!play) return; // Only update offsets while playing
+  
+    const interval = setInterval(() => {
+      setTracks((prev) =>
+        prev.map((track) => ({
+          ...track,
+          lastOffset: timer,
+        }))
+      );
+    }, 1000);
+  
+    return () => clearInterval(interval);
+  }, [play, timer]);
+
   const playAll = async () => { // play all tracks at once
     if (Tone.context.state !== "running") {
       await Tone.start().catch((err) =>
@@ -386,25 +424,23 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       );
     }
     setPlay(false);
-    setTimer(tracks[0]?.lastOffset ?? 0); // sync timer before playing added**
+    setTimer(tracks[0]?.lastOffset ?? 0); // sync timer before playing 
     setTracks((prev) => {
-      prev.forEach((t) => {
+      return prev.map((t) => {
         t.player.stop();
         if (t.pendingStartTimer) {
           clearTimeout(t.pendingStartTimer);
         }
-      });
-      return prev.map((t) => ({
-        ...t,
-        isPlaying: true,
-        pendingStartTimer: null,
-      }));
-    });
-    setTracks((prev) => {
-      prev.forEach((t) => {
+    
+        // Schedule playback
         scheduleStartWithDelay(t.id, 200);
+
+        return {
+          ...t,
+          isPlaying: true,
+          pendingStartTimer: null,
+        };
       });
-      return prev;
     });
   };
 
@@ -421,42 +457,55 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
         ...t,
         isPlaying: false,
         pendingStartTimer: null,
+        lastOffset: timer, // capture where it stopped 
       }));
     });
   };
 
-  //to rewind and fast forward by 1o
+  //to rewind and fast forward by 10
   const seekAll = (offsetSeconds: number) => {
-    let updatedOffset = 0; // capture this from the first track
+    let updatedOffset = 0; // captured from the first track
     setTracks((prevTracks) => {
-      prevTracks.forEach((track, index) => {
-        const player = track.player;
+      //console.log("▶️ [DEBUG] Initial Tracks:", prevTracks);
+      const updated = prevTracks.map((track, index) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const typedPlayer = player as any;
-        const duration = typedPlayer.buffer.duration;
-        
+        const typedPlayer = track.player as any;
+        const duration = typedPlayer.buffer?.duration ?? 0;
+
         const newOffset = Math.round(
-          Math.max(0, Math.min((track.lastOffset ?? 0) + offsetSeconds, duration))
+          Math.min((track.lastOffset ?? 0) + offsetSeconds, duration - 0.01)
         );
-  
-        if (play) {
-          typedPlayer.stop();
-          typedPlayer.start("+0.1", newOffset);
-        }        
 
-        track.lastOffset = newOffset;
-
+        if (track.isPlaying) {
+            typedPlayer.stop();
+            //typedPlayer.start("+0.1", newOffset);
+            setTimeout(() => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (typedPlayer as any).start(0, newOffset);
+            }, 100);
+        }
         // Capture the offset from the first track only
-        if (index === 0) updatedOffset = newOffset;
-        console.log(`[SEEK] ${play ? 'Playing' : 'Paused'} – newOffset: ${newOffset}`);
+        if (index === 0) {
+          updatedOffset = newOffset;
+        }
+
+        return {
+          ...track,
+          lastOffset: newOffset,
+        };
       });
-  
-      return [...prevTracks];
+      // Use first *valid* track's offset
+      const firstWithOffset = updated.find(t => typeof t.lastOffset === "number");
+      updatedOffset = firstWithOffset?.lastOffset ?? 0;
+      
+      return updated;
     });
-    // Update the progress UI
-    setTimer(Math.round(updatedOffset || 0));
+    // Update the progress UI and reflect new offset in timer
+    setTimeout(() => {
+      setTimer(Math.round(updatedOffset));
+      console.log(`Check seek all ${play ? 'Playing' : 'Paused'} – offsetSeconds: ${offsetSeconds}, updatedOffset: ${updatedOffset}`);
+    }, 0); // ensures it runs after state update
   };  
- 
 
   const rewind10 = () => seekAll(-10);
   const forward10 = () => seekAll(10);
@@ -674,7 +723,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
         </div>
 
         <div className="mixer-channels-container">            
-              {tracks.map((track) => (
+              {tracks.map((track, index) => (
                 <div key={track.id} className='channel-container'>
 
                   <div className="mixer-btn">
@@ -759,8 +808,8 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
                   </div>
 
                   <div className="channel-label">
-                    <p className='label' title={trackNames[track.id] || `Track ${track.id + 1}`}>
-                      {trackNames[track.id] ? trackNames[track.id] : `Track ${track.id + 1}`}
+                    <p className='label' title={trackNames[index] || `Track ${index + 1}`}>
+                      {trackNames[index] ? trackNames[index] : `Track ${index + 1}`}
                     </p>
                     {!readOnly && (
                       <button 
