@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect,  } from 'react';
 import * as Tone from "tone";
 import "./AudioMixer.css";
+import { getContext } from "tone";
 
 import { AudioTrack, AudioMixexProps } from './types';
 import { SoundscapeResponse, Sound } from '@/app/types/soundscape';
@@ -466,23 +467,30 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
   const seekAll = (offsetSeconds: number) => {
     let updatedOffset = 0; // captured from the first track
     setTracks((prevTracks) => {
-      //console.log("▶️ [DEBUG] Initial Tracks:", prevTracks);
+      
       const updated = prevTracks.map((track, index) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const typedPlayer = track.player as any;
         const duration = typedPlayer.buffer?.duration ?? 0;
 
+        const proposedOffset = (track.lastOffset ?? 0) + offsetSeconds;
         const newOffset = Math.round(
-          Math.min((track.lastOffset ?? 0) + offsetSeconds, duration - 0.01)
+          Math.max(0, Math.min(proposedOffset, duration - 0.01))
         );
 
         if (track.isPlaying) {
             typedPlayer.stop();
-            //typedPlayer.start("+0.1", newOffset);
             setTimeout(() => {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (typedPlayer as any).start(0, newOffset);
-            }, 100);
+              try {
+                const context = getContext() as unknown as AudioContext;
+                const startTime = context.currentTime + 0.1;
+                const adjustedOffset = newOffset === 0 ? 0.001 : newOffset;
+
+                typedPlayer.start(startTime, adjustedOffset);
+              } catch (e) {
+                console.error(`Seek error: Track ${track.id} failed to start:`, e);
+              }
+            }, 150); 
         }
         // Capture the offset from the first track only
         if (index === 0) {
