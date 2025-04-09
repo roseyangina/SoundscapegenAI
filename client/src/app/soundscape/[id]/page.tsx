@@ -39,7 +39,7 @@ export default function SoundscapePage() {
           // Extract data for AudioMixer
           const urls = data.sounds.map(sound => sound.file_path ? `http://localhost:3001${sound.file_path}` : (sound.preview_url || ''));
           const ids = data.sounds.map(sound => sound.sound_id);
-          const volumes = data.sounds.map(sound => sound.volume || 1.0);
+          const volumes = data.sounds.map(sound => Math.round(sound.volume || 1.0));
           const pans = data.sounds.map(sound => sound.pan || 0.0);
           const names = data.sounds.map(sound => sound.name || `Sound ${sound.sound_id}`);
           

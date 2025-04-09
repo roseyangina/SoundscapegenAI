@@ -471,7 +471,7 @@ app.post('/api/soundscapes', async (req, res) => {
             
             await db.query(
                 'INSERT INTO "SoundscapeSound" (soundscape_id, sound_id, volume, pan) VALUES ($1, $2, $3, $4)',
-                [soundscape.soundscape_id, sound_id, volume, pan]
+                [soundscape.soundscape_id, sound_id, Math.round(volume), pan]
             );
         }
         
@@ -619,13 +619,13 @@ app.post('/api/soundscapes/:id/sounds', async (req, res) => {
             // Update the existing relationship with new volume and pan
             await db.query(
                 'UPDATE "SoundscapeSound" SET volume = $1, pan = $2 WHERE soundscape_id = $3 AND sound_id = $4',
-                [sound.volume || 1.0, sound.pan || 0.0, soundscapeId, sound.sound_id]
+                [Math.round(sound.volume || 1.0), sound.pan || 0.0, soundscapeId, sound.sound_id]
             );
         } else {
             // Add the new sound to the soundscape
             await db.query(
                 'INSERT INTO "SoundscapeSound" (soundscape_id, sound_id, volume, pan) VALUES ($1, $2, $3, $4)',
-                [soundscapeId, sound.sound_id, sound.volume || 1.0, sound.pan || 0.0]
+                [soundscapeId, sound.sound_id, Math.round(sound.volume || 1.0), sound.pan || 0.0]
             );
         }
         
