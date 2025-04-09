@@ -12,6 +12,7 @@ export interface AudioTrack {
     panValue: number;
     pendingStartTimer: number | null;
     isMuted: boolean;
+    lastOffset: number; //Added**
 }
 
 // The props for the AudioMixer component
