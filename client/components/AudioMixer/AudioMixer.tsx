@@ -157,7 +157,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
           panValue: initialPan,
           pendingStartTimer: null,
           isMuted: false,
-          lastOffset: 0, // Added**
+          lastOffset: 0, 
         };
       });
 
