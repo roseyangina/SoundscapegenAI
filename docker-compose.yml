@@ -41,10 +41,8 @@ services:
     build:
       context: ./nlp
       dockerfile: Dockerfile
-    environment:
-      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
-      - FREESOUND_API_KEY=${FREESOUND_API_KEY}
-      - UNSPLASH_API_KEY=${UNSPLASH_API_KEY}
+    env_file:
+      - ./nlp/.env
     container_name: soundscape-python
     ports:
       - "3002:3002"
