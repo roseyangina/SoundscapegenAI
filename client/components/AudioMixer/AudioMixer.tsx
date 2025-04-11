@@ -473,20 +473,27 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
         const typedPlayer = track.player as any;
         const duration = typedPlayer.buffer?.duration ?? 0;
 
-        const proposedOffset = (track.lastOffset ?? 0) + offsetSeconds;
-        const newOffset = Math.round(
-          Math.max(0, Math.min(proposedOffset, duration - 0.01))
-        );
+        const baseOffset = timer; // use timer as base
+        const newOffset = Math.max(0, Math.min(baseOffset + offsetSeconds, duration - 0.01));
+        const adjustedOffset = newOffset === 0 ? 0.001 : newOffset;
+
+        // debug
+        console.log(`Seek Track ${track.id} – Playing: ${track.isPlaying}, Timer: ${timer}, NewOffset: ${newOffset}, Duration: ${duration}`);
 
         if (track.isPlaying) {
             typedPlayer.stop();
             setTimeout(() => {
               try {
-                const context = getContext() as unknown as AudioContext;
-                const startTime = context.currentTime + 0.1;
+                const context = Tone.getContext() as unknown as AudioContext;
+                const startTime = context.currentTime + 0.05;
                 const adjustedOffset = newOffset === 0 ? 0.001 : newOffset;
+                
+                // prevent overlap in rewind and forward
+                if (adjustedOffset > 0) {
+                  typedPlayer.stop();
+                  typedPlayer.start(startTime, adjustedOffset);
+                }
 
-                typedPlayer.start(startTime, adjustedOffset);
               } catch (e) {
                 console.error(`Seek error: Track ${track.id} failed to start:`, e);
               }
