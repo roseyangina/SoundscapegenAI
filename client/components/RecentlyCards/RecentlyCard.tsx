@@ -17,7 +17,7 @@ const RecentlyCard = () => {
         </div>
         <div className="audio-control">
           <audio controls>
-            <source src="" type="audio/mp3" />
+            <source src={null} type="audio/mp3" />
             Your browser does not support the audio element..
           </audio>
           {/* <span className="duration">30 min</span> */}
