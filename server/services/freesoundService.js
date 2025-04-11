@@ -154,6 +154,62 @@ async function getSoundDetails(freesoundId) {
   });
 }
 
+// Search for sounds using the Freesound API
+async function searchFreesound(query, maxResults = 1, options = {}) {
+  return new Promise((resolve, reject) => {
+    // Build the URL with query parameters
+    const params = new URLSearchParams({
+      query: query,
+      fields: "id,name,description,download,previews,duration,license",
+      sort: options.sort || "score",
+      filter: options.filter || "",
+      page_size: maxResults.toString(),
+      token: FREESOUND_API_KEY
+    });
+    
+    const url = `https://freesound.org/apiv2/search/text/?${params.toString()}`;
+    
+    https.get(url, (response) => {
+      let data = '';
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      response.on('end', () => {
+        try {
+          const result = JSON.parse(data);
+          
+          if (!result.results || result.results.length === 0) {
+            resolve({ results: [] });
+            return;
+          }
+          
+          // Process the results similar to Python code
+          const processedResults = result.results.map(sound => {
+            // Add token to download URL
+            if (sound.download) {
+              sound.download = `${sound.download}?token=${FREESOUND_API_KEY}`;
+            }
+            
+            // Extract preview URL
+            if (sound.previews && sound.previews['preview-hq-mp3']) {
+              sound.preview_url = sound.previews['preview-hq-mp3'];
+            }
+            
+            return sound;
+          });
+          
+          resolve({ results: processedResults });
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }).on('error', (err) => {
+      reject(err);
+    });
+  });
+}
+
 // Look up a sound in the db by freesoundId and sourceUrl
 async function getSoundByFreesoundId(freesoundId, sourceUrl) {
   try {
@@ -185,5 +241,6 @@ async function getSoundByFreesoundId(freesoundId, sourceUrl) {
 module.exports = {
   downloadAndSaveSound,
   getSoundDetails,
-  getSoundByFreesoundId
+  getSoundByFreesoundId,
+  searchFreesound
 };

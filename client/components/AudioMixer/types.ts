@@ -12,6 +12,7 @@ export interface AudioTrack {
     panValue: number;
     pendingStartTimer: number | null;
     isMuted: boolean;
+    lastOffset: number; 
 }
 
 // The props for the AudioMixer component
@@ -23,4 +24,5 @@ export interface AudioMixexProps {
     title?: string | null; // Optional title for the mixer
     readOnly?: boolean; // Whether the mixer is in read-only mode
     trackNames?: string[]; // Array of descriptive names for each track
+    soundscapeId?: string;
 } 

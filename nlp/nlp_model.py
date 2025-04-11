@@ -241,3 +241,63 @@ IMPORTANT: Return ONLY the JSON array, no other text or explanation.
     except Exception as e:
         print("Error calling Mistral for track names:", e)
         return sounds_info
+
+# Updated: Using Mistral to generate description based on user input and track's name
+def generate_description(user_text: str) -> str:
+    """
+    Use Mistral to generate a descriptive paragraph of 3-4 sentences
+    about how a sound might sound, based on a list of track names
+
+    Args:
+        track_names: The names of the sound tracks
+
+    Returns:
+        A string containing the description, or an empty string if something went wrong.
+    """
+
+    prompt_str = f"""
+    You are a specialized description generator. The user input has provided the sentence
+    that includes all track names that sepeareted by comma:"{user_text}"
+
+    Write a single paragraph (3-4 sentences) describing how this blended soundscape could sound.
+    Mention some detailed sound and explain how the sounds merge or complement one another.
+    Maintain a concise style.
+
+    - Please return ONLY a valid JSON object with one key: "description".
+    - "description" should be a pragraph about 3-4 sentences, evocative text describing the scene or content.
+
+    Example response:
+    {{
+      "description": "This blended soundscape transports listeners to the edge of a vast, dynamic ocean,
+                      where the rhythmic crashing of waves on a sandy beach creates a steady, soothing pulse.
+                      The sounds of heavy, frequent waves from the Baltic Sea add depth and power, merging with
+                      the pacific ocean's expansive resonance to create a sense of endless motion.
+                      The occasional splashes of water running and breaking add a lively, textured layer, complementing
+                      the consistent wave sounds with a touch of unpredictability, resulting in an immersive and natural coastal atmosphere."
+
+    }}
+
+    Return ONLY valid JSON, with no extra text, code fences, or disclaimers.
+    """.strip()
+
+    try:
+        response = mistral_client.chat.complete(
+            model=MODEL_NAME,
+            messages=[{"role": "user", "content": prompt_str}],
+        )
+
+        # Raw text from Mistral
+        raw_text = response.choices[0].message.content.strip()
+        if "```" in raw_text:
+            raw_text = raw_text.split("```")[-1].strip()
+
+        # Parse JSON
+        data = json.loads(raw_text)
+        if not isinstance(data, dict) or "description" not in data:
+            raise ValueError("Missing 'description' in Mistral response.")
+
+        return data["description"]
+
+    except Exception as e:
+        print("Error generating description with Mistral:", e)
+        return ""  # fallback: return an empty string or handle as needed

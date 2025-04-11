@@ -456,6 +456,7 @@ function HomeContent() {
             {(filteredSounds.length > 0 ? filteredSounds : homepageSounds).map((sound, index) => (
               <TrackCard
                 key={index}
+                sound_id={sound.sound_id}
                 imageUrl={sound.image_url || "/spaceshipFlying.jpg"}
                 altText={sound.name}
                 name={sound.name}

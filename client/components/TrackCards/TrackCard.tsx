@@ -4,14 +4,17 @@ import './TrackCard.css';
 // import { Eye, Download, Share2, Play } from "lucide-react";
 // Define the props interface with default values in mind.
 interface TrackCardProps {
+  sound_id?: number
   imageUrl?: string;
   altText?: string;
   date?: string;
   name?: string;
   description?: string;
   previewUrl?: string;
+  tags?: string[];
 }
 const TrackCard: React.FC<TrackCardProps> = ({
+  sound_id,
   imageUrl,  
   altText,   
   date,      
@@ -68,6 +71,14 @@ const TrackCard: React.FC<TrackCardProps> = ({
     }
   }, []);
 
+  let resolvedTags: string[] = [];
+  if (sound_id === 1) {
+    resolvedTags = ['Birds', 'Wind', 'Forest'];
+  } else if (sound_id === 2) {
+    resolvedTags = ['Study', 'Beats', 'Lo-fi'];
+  } else if (sound_id === 3) {
+    resolvedTags = ['Deep Wave', 'Piano', 'Chill'];
+  }
   return (
     <div className="track-card">
       <div className="track-control"
@@ -89,7 +100,7 @@ const TrackCard: React.FC<TrackCardProps> = ({
           </div>
         )}
         {/* <Play className="statsIcon" /> */}
-        <span className='icon'>U</span>
+        {/*<span className='icon'>U</span> */}
         {/* 
           <audio controls>
             <source src="" type="audio/mp3" className="audio" />
@@ -101,31 +112,16 @@ const TrackCard: React.FC<TrackCardProps> = ({
         <span className="date">{date}</span>
         <h3>{name}</h3>
         <p className="track-description">{description}</p>
-        <div className="tags">
-          <span className="tag">
-            <strong>Tags: </strong>
-          </span>
-          <span className="tag">Deep Wave,</span>
-          <span className="tag"> Open Sea, </span>
-          <span className="tag"> Continuous Flow, </span>
-          <span className="tag"> Distant Rumble, </span>
-          <span className="tag"> Slow Cresting</span>
-        </div>
-        <div className="stats">
-          <span className="stat">
-            {/* <Eye className="statsIcon" /> 250 */}
-            <span className='icon'>U</span> 250
-          </span>
-          <span className="stat">
-            {/* <Download className="statsIcon" /> 53 */}
-            <span className='icon'>U</span> 53
-          </span>
-          <span className="stat">
-            {/* <Share2 className="statsIcon" /> 112 */}
-            <span className='icon'>U</span> 112
-
-          </span>
-        </div>
+        {resolvedTags.length > 0 && (
+          <div className="tags">
+            <span className="tag-label"><strong>Tags:</strong></span>
+              {resolvedTags.map((tag, index) => (
+                <span className="tag-pill" key={index}>
+                  {tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       {/* Hidden audio element; play/pause is controlled via image click */}
       {previewUrl && (

@@ -24,6 +24,7 @@ const Mixer = () => {
   const [error, setError] = useState<string | null>(null);
   const [soundscapeName, setSoundscapeName] = useState<string | null>(null);
   const [title, setTitle] = useState<string | null>(null);
+  const [soundscapeId, setSoundscapeId] = useState<string | null>(null);
 
   useEffect(() => {
     const soundsQueryParam = searchParams.get("sounds"); //get sounds from the urls
@@ -93,7 +94,7 @@ const Mixer = () => {
         // Extract sound file paths, IDs, volumes, pans, and names
         const soundPaths = data.sounds.map(sound => `http://localhost:3001${sound.file_path}`);
         const soundIds = data.sounds.map(sound => sound.sound_id);
-        const volumes = data.sounds.map(sound => sound.volume || 1.0);
+        const volumes = data.sounds.map(sound => Math.round(sound.volume || 1.0));
         const pans = data.sounds.map(sound => sound.pan || 0.0);
         const names = data.sounds.map(sound => sound.name || `Sound ${sound.sound_id}`);
 
@@ -103,6 +104,7 @@ const Mixer = () => {
         setSoundVolumes(volumes);
         setSoundPans(pans);
         setTrackNames(names);
+        setSoundscapeId(soundscapeId);
     } catch (err) {
         console.error("Error loading soundscape:", err);
         setError("Failed to load soundscape. It may not exist or has been removed.");
@@ -140,6 +142,7 @@ const Mixer = () => {
                         initialPans={soundPans}
                         title={title}
                         trackNames={trackNames}
+                        soundscapeId={soundscapeId || undefined}
                     />
                 ) : (
                     <p>Loading sounds...</p>
