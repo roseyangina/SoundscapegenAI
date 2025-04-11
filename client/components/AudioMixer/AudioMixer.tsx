@@ -7,7 +7,7 @@ import { getContext } from "tone";
 
 import { AudioTrack, AudioMixexProps } from './types';
 import { SoundscapeResponse, Sound } from '@/app/types/soundscape';
-import { createSoundscape, downloadSound, searchSingleSound, addSoundToSoundscape } from '@/app/services/soundscapeService';
+import { createSoundscape, getDescription, getImage, downloadSound, searchSingleSound, addSoundToSoundscape } from '@/app/services/soundscapeService';
 
 // We create a cache to store Tone.Player instances keyed by their URL. This is to ensure that each sound loads exactly once
 const playerCache = new Map<string, Tone.Player>();
@@ -87,6 +87,9 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
   const [soundscapeDescription, setSoundscapeDescription] = useState<string>("");
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<SoundscapeResponse | null>(null);
+
+  const [imageUrl, setImageUrl] = useState("");
+  const [soundDescription, setDescription] = useState("");
 
   const [play, setPlay] = useState<boolean>(true);
   const [muted, setMuted] = useState<boolean>(false);
@@ -245,6 +248,22 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       clearInterval(counter);
     };
   }, [play, tracks])
+
+  useEffect(() => {
+    if (!title) return;
+  
+    const fetchImage = async () => {
+      const image = await getImage(title);
+      console.log("This is the image URL:", image);
+      setImageUrl(image);
+    };
+
+    // const joinedTrack = trackNames.join(", ");
+    const sound_description = getDescription(title);
+    setDescription(sound_description);
+    
+    fetchImage();
+  }, [title, trackNames]);
 
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -780,13 +799,12 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       <div className="music-player-container">
         <div className="player-screen">
           <div className="title-container">
-            <p className="title">s</p>
+            <p className="title">{title}</p>
           </div>
 
           <div className="img-container">
             <img
-                src="/spaceshipFlying.jpg"
-                alt="audioImage"
+                src={imageUrl}
                 className="audio-image"
             />
           </div> 
@@ -1058,8 +1076,16 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       <div className='information-wrapper'>
         <div className="information">
           <p className='infor-title'>{title}</p>
-          <p className='infor-description'>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-          <p className='infor-tags'>The included sounds:</p>
+          <p className='infor-description'>{soundDescription}</p>
+          <p className='infor-tags'>Included sound tracks: </p>
+          <ul className="infor-sounds-list">
+            {tracks.map((track) => {
+              const name = trackNames[track.id] || `Track ${track.id + 1}`;
+              return (
+                <li key={track.id}>{name}</li>
+              );
+            })}
+          </ul>
         </div>
         <div className="functions">
           <div className='credit'>

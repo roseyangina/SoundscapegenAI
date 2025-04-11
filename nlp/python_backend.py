@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from nlp_model import get_keywords, generate_track_names
+from nlp_model import get_keywords, generate_track_names, generate_description
 from freesound import search_freesound
+from unsplash_image import get_unsplash_image
 
 app = Flask(__name__)
 CORS(app)
@@ -133,6 +134,38 @@ def search_sound():
     except Exception as e:
         print("Exception in /api/sound/search:", e)
         return jsonify(success=False, message=str(e)), 500
+    
+@app.route('/api/description', methods=['POST'])
+def get_description():
+    try:
+        data = request.get_json() or {}
+        if 'str' not in data:
+            return jsonify(success=False, message="Missing 'str' parameter"), 400
+
+        desc = generate_description(data['str'])
+        if not desc:
+            return jsonify(success=False, message="Failed to generate description."), 500
+
+        # Return a JSON with success = true, description = ...
+        return jsonify(success=True, description=desc), 200
+
+    except Exception as e:
+        print("Error in /api/description route:", e)
+        return jsonify(success=False, message=str(e)), 500
+    
+
+@app.route("/api/get-image", methods=["POST"])
+def get_image():
+    data = request.get_json()
+    if not data or "str" not in data:
+        return jsonify(success=False, message="Missing 'str' parameter."), 400
+
+    user_input = data["str"]
+    result = get_unsplash_image(user_input)
+    if result.get("image_url"):
+        return jsonify(success=True, **result), 200
+    else:
+        return jsonify(success=False, message="No image found."), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3002)

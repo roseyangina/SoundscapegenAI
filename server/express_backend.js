@@ -821,4 +821,73 @@ app.get('/api/homepage-sounds', async (req, res) => {
       return res.status(500).json({ success: false, message: 'Error fetching homepage sounds: ' + error.message });
     }
   });
+
+// Updated: Add description end point
+app.post('/api/description', async (req, res) => {
+    const { str } = req.body;
+    if (!str) {
+      return res.status(400).json({ success: false, message: "Missing 'str' parameter" });
+    }
   
+    // Then forward to your Python service
+    try {
+      const pythonRes = await fetch("http://soundscape-python:3002/api/description", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ str })
+      });
+  
+      const jsonResponse = await pythonRes.json();
+      if (!pythonRes.ok || !jsonResponse.success) {
+        return res.status(400).json({
+          success: false,
+          message: jsonResponse.message || "Failed to generate description."
+        });
+      }
+  
+      return res.status(200).json(jsonResponse);
+  
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Server error generating description."
+      });
+    }
+});
+
+// Updated: Add url image end point
+app.post('/api/get-image', async (req, res) => {
+
+    const { str } = req.body;
+    if (!str) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing 'str' parameter in the request."
+      });
+    }
+  
+    try {
+      const response = await fetch("http://soundscape-python:3002/api/get-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ str })
+      });
+
+      const data = await response.json();
+      console.log("Response from Python service:", data);
+  
+      if (!response.ok || !data.success) {
+        return res.status(400).json({
+          success: false,
+          message: data.message || "Failed to generate image URL."
+        });
+      }
+      
+      return res.status(200).json(data);
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error while generating image."
+      });
+    }
+});

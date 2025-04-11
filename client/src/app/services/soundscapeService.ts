@@ -134,3 +134,50 @@ export async function getTrackNames(sounds: Sound[]): Promise<Sound[]> {
   const data = await res.json();
   return data.success ? data.sounds : sounds; // Return original sounds as fallback
 } 
+
+export async function getDescription(inputString: string) {
+  const res = await fetch(`${API_BASE_URL}/api/description`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json' 
+    },
+    body: JSON.stringify({ str: inputString })
+  });
+
+  if (!res.ok) {
+    throw new Error(`HTTP error, status ${res.status}`);
+  }
+
+  const data = await res.json();
+  if (!data.success) {
+    throw new Error(data.message || "No description generated.");
+  }
+  return data.description as string;
+}
+
+export async function getImage(inputString: string): Promise<string> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/get-image`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ str: inputString })
+    });
+
+    if (!res.ok) {
+      throw new Error(`Unsplash fetch failed: ${res.status}`);
+    }
+    
+    const data = await res.json();
+    if (data.success && data.image_url) {
+      return data.image_url;
+    } else {
+      console.warn("No image results found for query:", inputString);
+      return "";
+    }
+  } catch (error) {
+    console.error("Error fetching image from Unsplash:", error);
+    return "";
+  }
+}
