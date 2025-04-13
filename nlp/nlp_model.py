@@ -4,6 +4,13 @@ import json
 from mistralai import Mistral
 
 API_KEY = os.getenv("MISTRAL_API_KEY")
+if not API_KEY:
+    raise ValueError("MISTRAL_API_KEY environment variable is not set")
+
+# Ensure the API key is properly formatted
+if not API_KEY.startswith("Bearer "):
+    API_KEY = f"Bearer {API_KEY}"
+
 MODEL_NAME = "mistral-large-latest"
 
 mistral_client = Mistral(api_key=API_KEY)

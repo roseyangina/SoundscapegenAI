@@ -1,11 +1,75 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from nlp_model import get_keywords, generate_track_names, generate_description
+from nlp_model import get_keywords, generate_track_names, generate_description, mistral_client, MODEL_NAME
 from freesound import search_freesound
 from unsplash_image import get_unsplash_image
+import json
 
 app = Flask(__name__)
 CORS(app)
+
+# Knowledge base as a string constant
+SOUNDSCAPEGEN_KNOWLEDGE = """
+SoundscapeGen Knowledge Base
+
+Overview:
+SoundscapeGen is a web application that allows users to create custom soundscapes by describing what they want to hear. The platform uses AI to understand user descriptions and find matching sounds that can be mixed together.
+
+Key Features:
+1. Sound Generation
+- Users can describe a soundscape using natural language
+- The system extracts keywords and finds matching sounds
+- Supports various sound categories (nature, urban, music, etc.)
+- Each sound can be adjusted for volume and pan position
+
+2. Mixer Interface
+- Drag and drop interface for arranging sounds
+- Volume and pan controls for each sound
+- Real-time preview of the mix
+- Ability to download the final mix as MP3
+
+3. Sound Library
+- Curated collection of high-quality sounds
+- Organized by categories
+- Search functionality
+- Preview capability
+
+4. User Features
+- Save and share soundscapes
+- Browse popular sounds
+- Create custom mixes
+- Download final compositions
+
+Common Questions:
+Q: How do I create a soundscape?
+A: Simply type a description in the search box (e.g., "forest with birds and a stream"). The system will find matching sounds and take you to the mixer.
+
+Q: How do I adjust sounds?
+A: In the mixer, you can adjust the volume and pan position of each sound using the sliders. The changes are applied in real-time.
+
+Q: Can I save my soundscapes?
+A: Yes, you can save your soundscapes and access them later. They will be stored in your account.
+
+Q: How do I download my mix?
+A: In the mixer interface, click the download button. Your soundscape will be saved as an MP3 file.
+
+Q: What kind of sounds can I use?
+A: The platform offers various categories including nature sounds, urban environments, music, and more. You can browse by category or search for specific sounds.
+
+Technical Information:
+- Maximum of 6 sounds per soundscape
+- MP3 format for downloads
+- Real-time audio processing
+- Cloud-based storage for saved soundscapes
+- Cross-platform compatibility
+
+Best Practices:
+1. Be specific in your descriptions
+2. Start with fewer sounds and add more as needed
+3. Use the volume controls to balance the mix
+4. Experiment with pan positions for spatial effects
+5. Save your work regularly
+"""
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -166,6 +230,67 @@ def get_image():
         return jsonify(success=True, **result), 200
     else:
         return jsonify(success=False, message="No image found."), 404
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    try:
+        data = request.get_json()
+        if not data or 'message' not in data:
+            return jsonify(success=False, message="Missing 'message' parameter"), 400
+
+        user_message = data['message']
+        
+        # Create a prompt for Mistral
+        prompt = f"""
+        You are a helpful assistant for SoundscapeGen, a soundscape creation platform. 
+        Use the following knowledge base to answer the user's question. If the answer 
+        isn't in the knowledge base, say you don't know and suggest more applicable questions.
+
+        Remove any markdown formatting from the response.
+
+        Knowledge Base:
+        {SOUNDSCAPEGEN_KNOWLEDGE}
+
+        User Question: {user_message}
+
+        Provide a clear, concise, and helpful response based on the knowledge base.
+        If the question is about something not covered in the knowledge base, politely 
+        say you don't have that information but you can help with SoundscapeGen-related 
+        questions.
+
+        Return your response in a JSON format with a single field 'response'.
+        """
+
+        # Call Mistral
+        response = mistral_client.chat.complete(
+            model=MODEL_NAME,
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        # Extract the response
+        raw_text = response.choices[0].message.content.strip()
+        
+        # Clean up response if wrapped in code blocks
+        if "```json" in raw_text:
+            raw_text = raw_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw_text:
+            raw_text = raw_text.split("```")[1].strip()
+
+        try:
+            # Parse the JSON response
+            data = json.loads(raw_text)
+            if not isinstance(data, dict) or "response" not in data:
+                raise ValueError("Missing 'response' in Mistral response")
+
+            return jsonify(success=True, response=data["response"]), 200
+
+        except json.JSONDecodeError as e:
+            # If parsing fails, return the raw text as the response
+            return jsonify(success=True, response=raw_text), 200
+
+    except Exception as e:
+        print(f"Error in chat endpoint: {str(e)}")
+        return jsonify(success=False, message=str(e)), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3002)

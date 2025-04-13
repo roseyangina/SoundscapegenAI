@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import './Login.css';
 
 interface LoginProps {
@@ -6,8 +7,54 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ setUser }) => {
-  const handleGoogleLogin = () => {
-    setUser(true);
+  const router = useRouter();
+
+  const handleGoogleLogin = async () => {
+    try {
+      // Open a popup window for Google OAuth
+      const width = 500;
+      const height = 600;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      
+      const popup = window.open(
+        'http://localhost:3001/api/auth/google',
+        'Google Login',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+      
+      if (!popup) {
+        console.error('Popup blocked. Please allow popups for this site.');
+        return;
+      }
+
+      // Listen for messages from the popup
+      const messageHandler = (event: MessageEvent) => {
+        // Only accept messages from our server domain
+        if (event.origin !== 'http://localhost:3001') return;
+        
+        if (event.data.token && event.data.user) {
+          // Store the token and user data
+          localStorage.setItem('token', event.data.token);
+          localStorage.setItem('user', JSON.stringify(event.data.user));
+          
+          // Close the popup
+          if (popup) popup.close();
+          
+          // Remove the event listener
+          window.removeEventListener('message', messageHandler);
+          
+          // Force a page reload
+          setTimeout(() => {
+            window.location.href = window.location.href;
+          }, 100);
+        }
+      };
+
+      window.addEventListener('message', messageHandler);
+    } catch (err) {
+      console.error('Google login error:', err);
+    }
   };
 
   return (

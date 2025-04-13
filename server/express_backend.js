@@ -891,3 +891,43 @@ app.post('/api/get-image', async (req, res) => {
       });
     }
 });
+
+// Chat endpoint for the chatbot
+app.post('/api/chat', async (req, res) => {
+  const { message } = req.body;
+  
+  if (!message) {
+    return res.status(400).json({
+      success: false,
+      message: 'Message is required'
+    });
+  }
+
+  try {
+    console.log('Forwarding chat request to Python service...');
+    // Forward the request to the Python service
+    const response = await fetch("http://soundscape-python:3002/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
+    });
+
+    console.log('Python service response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Python service error response:', errorText);
+      throw new Error(`Failed to get response from Python service: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('Python service response:', data);
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error('Chat error details:', error);
+    return res.status(500).json({
+      success: false,
+      message: `Error processing chat message: ${error.message}`
+    });
+  }
+});
