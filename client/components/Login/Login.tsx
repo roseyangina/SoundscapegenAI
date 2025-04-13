@@ -28,26 +28,16 @@ const Login: React.FC<LoginProps> = ({ setUser }) => {
         return;
       }
 
-      // Listen for messages from the popup
       const messageHandler = (event: MessageEvent) => {
-        // Only accept messages from our server domain
         if (event.origin !== 'http://localhost:3001') return;
         
         if (event.data.token && event.data.user) {
-          // Store the token and user data
           localStorage.setItem('token', event.data.token);
           localStorage.setItem('user', JSON.stringify(event.data.user));
           
-          // Close the popup
           if (popup) popup.close();
-          
-          // Remove the event listener
           window.removeEventListener('message', messageHandler);
-          
-          // Force a page reload
-          setTimeout(() => {
-            window.location.href = window.location.href;
-          }, 100);
+          window.location.reload();
         }
       };
 
@@ -60,37 +50,11 @@ const Login: React.FC<LoginProps> = ({ setUser }) => {
   return (
     <div className="container">
       <div className="header">
-        <div className="text">Log In</div>
+        <div className="text">Log In:</div>
         <div className="underline"></div>
       </div>
-      <div className="inputs">
-        <div className="input">
-          {/* <CircleUserRound className="icon" /> */}
-          <span className='icon'>U</span>
-          <input
-            type="email"
-            className="email"
-            placeholder="Enter your email or username"
-          />
-        </div>
-        <div className="input">
-          {/* <Lock className="icon" /> */}
-          <span className='icon'>U</span>
-          <input type="password" placeholder="Enter your password" />
-        </div>
-      </div>
-      <div className="forgotPass">
-        Lost Password? <span>Click Here!</span>
-      </div>
-      <div className="submitContainer">
-        <button className="submit signupButton">Sign Up</button>
-        <button className="submit">Log in</button>
-      </div>
-      <div className="another">
-        <div className="dash2"></div>
-        <p>or log in with</p>
-        <div className="dash2"></div>
-      </div>
+      
+      
       <div className="google" onClick={handleGoogleLogin}>
         {/* <Laugh /> */}
         Google
