@@ -11,6 +11,7 @@ const Login: React.FC<LoginProps> = ({ setUser }) => {
 
   const handleGoogleLogin = async () => {
     try {
+      // Open a popup window for Google OAuth
       const width = 500;
       const height = 600;
       const left = window.screenX + (window.outerWidth - width) / 2;
