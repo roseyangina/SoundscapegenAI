@@ -165,7 +165,7 @@ def get_image():
     if result.get("image_url"):
         return jsonify(success=True, **result), 200
     else:
-        return jsonify(success=False, message="No image found."), 500
+        return jsonify(success=False, message="No image found."), 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3002)
