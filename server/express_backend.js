@@ -355,53 +355,16 @@ app.post('/api/sounds/download', async (req, res) => {
         if (existingSound) {
             console.log("Sound already exists in database:", existingSound);
             
-            // Update the name and preview_url if provided and different from existing
-            if ((name && name !== existingSound.name) || 
-                (previewUrl && previewUrl !== existingSound.preview_url)) {
-                
-                const db = require('./db/config');
-                const updateFields = [];
-                const updateValues = [];
-                let valueIndex = 1;
-                
-                if (name && name !== existingSound.name) {
-                    updateFields.push(`name = $${valueIndex}`);
-                    updateValues.push(name);
-                    valueIndex++;
-                }
-                
-                if (previewUrl && previewUrl !== existingSound.preview_url) {
-                    updateFields.push(`preview_url = $${valueIndex}`);
-                    updateValues.push(previewUrl);
-                    valueIndex++;
-                }
-                
-                if (updateFields.length > 0) {
-                    updateValues.push(existingSound.sound_id);
-                    const updateQuery = `UPDATE "Sound" SET ${updateFields.join(', ')}, updated_at = NOW() WHERE sound_id = $${valueIndex} RETURNING *`;
-                    
-                    console.log(`Updating sound ${existingSound.sound_id} with new name/preview URL`);
-                    const result = await db.query(updateQuery, updateValues);
-                    
-                    if (result.rows.length > 0) {
-                        console.log("Sound updated successfully:", result.rows[0]);
-                        return res.status(200).json({
-                            success: true,
-                            message: 'Sound exists and was updated with new information',
-                            sound: result.rows[0]
-                        });
-                    }
-                }
-            }
-            
+            // Return the existing sound immediately
             return res.status(200).json({ 
                 success: true, 
-                message: 'Sound already exists in the database',
-                sound: existingSound
+                message: 'Sound already exists in database',
+                sound: existingSound,
+                isExisting: true
             });
         }
         
-        console.log("Downloading sound:", { freesoundId, sourceUrl, name, previewUrl });
+        // If sound doesn't exist, download and save it
         const sound = await freesoundService.downloadAndSaveSound(
             freesoundId, 
             sourceUrl, 
@@ -517,7 +480,7 @@ app.post('/api/soundscapes', async (req, res) => {
     try {
         await db.query('BEGIN');
         
-        // Check if the soundscape exists
+        // Check if the soundscape exists with the same name/description
         let soundscape;
         const existingResult = await db.query(
             'SELECT * FROM "Soundscape" WHERE name = $1 AND description = $2',
@@ -534,12 +497,40 @@ app.post('/api/soundscapes', async (req, res) => {
                 [soundscape.soundscape_id]
             );
         } else {
-            // Create a new soundscape
-            const soundscapeResult = await db.query(
-                'INSERT INTO "Soundscape" (name, description, user_id) VALUES ($1, $2, $3) RETURNING *',
-                [name, description || '', user_id || null]
-            );
-            soundscape = soundscapeResult.rows[0];
+            // Create a new soundscape, ensuring we don't conflict with existing IDs
+            try {
+                const soundscapeResult = await db.query(
+                    'INSERT INTO "Soundscape" (name, description, user_id) VALUES ($1, $2, $3) RETURNING *',
+                    [name, description || '', user_id || null]
+                );
+                soundscape = soundscapeResult.rows[0];
+            } catch (insertError) {
+                if (insertError.code === '23505' && insertError.constraint === 'Soundscape_pkey') {
+                    // Primary key violation - try to get a valid ID by checking the sequence
+                    const seqResult = await db.query('SELECT last_value FROM "Soundscape_soundscape_id_seq"');
+                    const lastSeqValue = seqResult.rows[0].last_value;
+                    
+                    // Get the max ID to ensure we're ahead of any manually inserted values
+                    const maxIdResult = await db.query('SELECT MAX(soundscape_id) FROM "Soundscape"');
+                    const maxId = maxIdResult.rows[0].max || 0;
+                    
+                    // Use whichever is higher and add 1
+                    const nextId = Math.max(lastSeqValue, maxId) + 1;
+                    
+                    // Update the sequence
+                    await db.query(`SELECT setval('"Soundscape_soundscape_id_seq"', ${nextId - 1}, true)`);
+                    
+                    // Try insert again
+                    const soundscapeResult = await db.query(
+                        'INSERT INTO "Soundscape" (name, description, user_id) VALUES ($1, $2, $3) RETURNING *',
+                        [name, description || '', user_id || null]
+                    );
+                    soundscape = soundscapeResult.rows[0];
+                } else {
+                    // Different error, rethrow
+                    throw insertError;
+                }
+            }
         }
         
         // Filter out duplicate sound_ids
@@ -1157,3 +1148,42 @@ app.post('/api/chat', async (req, res) => {
     });
   }
 });
+
+// Run fix_sound_sequence
+async function fixSoundSequence() {
+  try {
+    const db = require('./db/config');
+    
+    // Fix Sound table sequence
+    const soundSeqResult = await db.query('SELECT last_value FROM "Sound_sound_id_seq"');
+    const currentSoundSeqValue = soundSeqResult.rows[0].last_value;
+    
+    const maxSoundIdResult = await db.query('SELECT MAX(sound_id) FROM "Sound"');
+    const maxSoundId = maxSoundIdResult.rows[0].max || 0;
+    
+    console.log(`[Database] Sound: Current sequence value: ${currentSoundSeqValue}, Maximum ID: ${maxSoundId}`);
+    
+    if (currentSoundSeqValue <= maxSoundId) {
+      console.log('[Database] Fixing Sound_sound_id_seq...');
+      await db.query(`SELECT setval('"Sound_sound_id_seq"', ${maxSoundId}, true)`);
+      console.log(`[Database] Sound sequence has been reset to ${maxSoundId}`);
+    }
+    
+    // Fix Soundscape table sequence
+    const soundscapeSeqResult = await db.query('SELECT last_value FROM "Soundscape_soundscape_id_seq"');
+    const currentSoundscapeSeqValue = soundscapeSeqResult.rows[0].last_value;
+    
+    const maxSoundscapeIdResult = await db.query('SELECT MAX(soundscape_id) FROM "Soundscape"');
+    const maxSoundscapeId = maxSoundscapeIdResult.rows[0].max || 0;
+    
+    console.log(`[Database] Soundscape: Current sequence value: ${currentSoundscapeSeqValue}, Maximum ID: ${maxSoundscapeId}`);
+    
+    if (currentSoundscapeSeqValue <= maxSoundscapeId) {
+      console.log('[Database] Fixing Soundscape_soundscape_id_seq...');
+      await db.query(`SELECT setval('"Soundscape_soundscape_id_seq"', ${maxSoundscapeId}, true)`);
+      console.log(`[Database] Soundscape sequence has been reset to ${maxSoundscapeId}`);
+    }
+  } catch (error) {
+    console.error('[Database] Error fixing sequences:', error);
+  }
+}

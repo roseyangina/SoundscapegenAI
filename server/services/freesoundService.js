@@ -53,8 +53,19 @@ function downloadFile(url, filePath) {
 
 // Download a sound from the Freesound API and save it to the local filesystem.
 async function downloadAndSaveSound(freesoundId, sourceUrl, name, description, previewUrl) {
-  console.log(`Starting download for sound ${freesoundId} from ${sourceUrl}`);
-  console.log(`Preview URL: ${previewUrl}`);
+  console.log(`Downloading sound: ${JSON.stringify({
+    freesoundId,
+    sourceUrl,
+    name,
+    previewUrl
+  })}`);
+
+  // First check if this sound already exists in the database by source URL
+  const existingSound = await getSoundByFreesoundId(freesoundId, sourceUrl);
+  if (existingSound) {
+    console.log(`Sound already exists in database with ID ${existingSound.sound_id}`);
+    return existingSound;
+  }
 
   const filename = `${freesoundId}_${Date.now()}.mp3`;
   const filePath = path.join(SOUNDS_DIR, filename);
@@ -96,17 +107,6 @@ async function downloadAndSaveSound(freesoundId, sourceUrl, name, description, p
         return reject(err);
       }
       try {
-        // Check if a record with this source_url or file_path already exists
-        const existingResult = await db.query(
-          'SELECT * FROM "Sound" WHERE source_url = $1 OR file_path = $2',
-          [sourceUrl, `/sounds/${filename}`]
-        );
-        
-        if (existingResult.rows.length > 0) {
-          console.log(`Sound already exists in database with ID ${existingResult.rows[0].sound_id}`);
-          return resolve(existingResult.rows[0]);
-        }
-        
         // If not exists, insert new record
         const result = await db.query(
           'INSERT INTO "Sound" (source_url, freesound_id, file_path, name, description, preview_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
