@@ -793,32 +793,59 @@ app.listen(port, async () => {
 // redis homepage
 
 app.get('/api/homepage-sounds', async (req, res) => {
-    const cacheKey = 'homepage:sounds';
+    const cacheKey = 'homepage:preset_soundscapes';
     try {
-      // Check if the sounds are cached in Redis
+      // Check if the preset soundscapes are cached in Redis
       if (redisClient.isReady) {
-        const cachedSounds = await redisClient.get(cacheKey);
-        if (cachedSounds) {
-          console.log('Cache hit for homepage sounds');
-          return res.status(200).json({ success: true, sounds: JSON.parse(cachedSounds) });
+        const cachedSoundscapes = await redisClient.get(cacheKey);
+        if (cachedSoundscapes) {
+          console.log('Cache hit for homepage preset soundscapes');
+          return res.status(200).json({ success: true, soundscapes: JSON.parse(cachedSoundscapes) });
         }
       } else {
         console.warn('Redis client not ready, skipping cache check');
       }
   
-      // If not cached, query the database.
+      // If not cached, query the database for preset soundscapes
       const db = require('./db/config');
-      const result = await db.query('SELECT * FROM "Sound" LIMIT 3');
+      
+      // First get the preset soundscapes
+      const soundscapesResult = await db.query(`
+        SELECT * FROM "Soundscape" 
+        WHERE is_preset = true 
+        ORDER BY created_at DESC
+      `);
+      
+      // For each soundscape, also get its associated sounds
+      const soundscapesWithSounds = await Promise.all(
+        soundscapesResult.rows.map(async (soundscape) => {
+          const soundsResult = await db.query(`
+            SELECT s.*, ss.volume, ss.pan 
+            FROM "Sound" s
+            JOIN "SoundscapeSound" ss ON s.sound_id = ss.sound_id
+            WHERE ss.soundscape_id = $1`,
+            [soundscape.soundscape_id]
+          );
+          
+          return {
+            ...soundscape,
+            sounds: soundsResult.rows
+          };
+        })
+      );
       
       // Cache the result in Redis for one hour (3600 seconds)
       if (redisClient.isReady) {
-        await redisClient.set(cacheKey, JSON.stringify(result.rows), { EX: 3600 });
+        await redisClient.set(cacheKey, JSON.stringify(soundscapesWithSounds), { EX: 3600 });
       }
       
-      return res.status(200).json({ success: true, sounds: result.rows });
+      return res.status(200).json({ success: true, soundscapes: soundscapesWithSounds });
     } catch (error) {
-      console.error('Error fetching homepage sounds:', error);
-      return res.status(500).json({ success: false, message: 'Error fetching homepage sounds: ' + error.message });
+      console.error('Error fetching homepage preset soundscapes:', error);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Error fetching homepage preset soundscapes: ' + error.message 
+      });
     }
   });
 

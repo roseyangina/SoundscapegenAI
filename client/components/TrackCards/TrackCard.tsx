@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import './TrackCard.css';
+import Link from 'next/link';
 
 // import { Eye, Download, Share2, Play } from "lucide-react";
-// Define the props interface with default values in mind.
+// Redefine the props interface to handle soundscapes
 interface TrackCardProps {
-  sound_id?: number
+  soundscape_id?: number;
+  sound_id?: number;
   imageUrl?: string;
   altText?: string;
   date?: string;
@@ -12,15 +14,19 @@ interface TrackCardProps {
   description?: string;
   previewUrl?: string;
   tags?: string[];
+  isSoundscape?: boolean;
 }
+
 const TrackCard: React.FC<TrackCardProps> = ({
+  soundscape_id,
   sound_id,
   imageUrl,  
   altText,   
   date,      
   name,      
   description, 
-  previewUrl 
+  previewUrl,
+  isSoundscape = false
 }) => {
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -37,8 +43,19 @@ const TrackCard: React.FC<TrackCardProps> = ({
     }
   };
 
-  // Function to play the audio when the image is clicked
-  const handleImageClick = () => {
+  // Function to handle the card click
+  const handleCardClick = () => {
+    if (isSoundscape && soundscape_id) {
+      // If it's a soundscape, navigate to the soundscape page
+      window.location.href = `/soundscape/${soundscape_id}`;
+    } else {
+      // Otherwise just play/pause the sound
+      handleAudioToggle();
+    }
+  };
+
+  // Function to play/pause the audio
+  const handleAudioToggle = () => {
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
@@ -52,6 +69,9 @@ const TrackCard: React.FC<TrackCardProps> = ({
   // Handle click on progress bar container to seek audio
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (!audioRef.current || !progressContainerRef.current) return;
+
+    // Prevent the click from propagating to the parent container
+    e.stopPropagation();
 
     const rect = progressContainerRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -79,18 +99,16 @@ const TrackCard: React.FC<TrackCardProps> = ({
   } else if (sound_id === 3) {
     resolvedTags = ['Deep Wave', 'Piano', 'Chill'];
   }
+
   return (
-    <div className="track-card">
-      <div className="track-control"
-          onClick={handleImageClick} 
-          style={{ position: 'relative', cursor: 'pointer' }}
-      >
-      <img src={imageUrl} alt={altText} />
+    <div className={`track-card ${isSoundscape ? 'soundscape-card' : ''}`} onClick={handleCardClick}>
+      <div className="track-control" style={{ position: 'relative', cursor: 'pointer' }}>
+        <img src={imageUrl} alt={altText} />
         <div className="play-icon-overlay">
-          {isPlaying ? '❚❚' : '►'}
+          {isSoundscape ? '' : (isPlaying ? '❚❚' : '►')}
         </div>
-        {/* The progress bar appears on hover */}
-        {previewUrl && (
+        {/* The progress bar appears on hover for regular sounds */}
+        {!isSoundscape && previewUrl && (
           <div 
             className="progress-bar-container" 
             ref={progressContainerRef}
@@ -99,14 +117,11 @@ const TrackCard: React.FC<TrackCardProps> = ({
             <div className="progress-bar" style={{ width: `${progress}%` }} />
           </div>
         )}
-        {/* <Play className="statsIcon" /> */}
-        {/*<span className='icon'>U</span> */}
-        {/* 
-          <audio controls>
-            <source src="" type="audio/mp3" className="audio" />
-            Your browser does not support the audio element..
-          </audio> 
-        */}
+        {isSoundscape && (
+          <div className="soundscape-badge-overlay">
+            <span>Soundscape</span>
+          </div>
+        )}
       </div>
       <div className="info-track">
         <span className="date">{date}</span>
@@ -124,7 +139,7 @@ const TrackCard: React.FC<TrackCardProps> = ({
         )}
       </div>
       {/* Hidden audio element; play/pause is controlled via image click */}
-      {previewUrl && (
+      {!isSoundscape && previewUrl && (
           <audio 
           ref={audioRef} 
           src={previewUrl} 

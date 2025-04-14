@@ -31,9 +31,11 @@ export default function SoundscapePage() {
     async function fetchSoundscapeDetails() {
       try {
         setIsLoading(true);
+        console.log(`Starting to fetch soundscape with ID: ${soundscapeId}`);
         const data = await getSoundscapeById(soundscapeId);
         
         if (data.success) {
+          console.log('Soundscape data successfully received:', data);
           setSoundscapeDetails(data);
           
           // Extract data for AudioMixer
@@ -49,11 +51,12 @@ export default function SoundscapePage() {
           setSoundPans(pans);
           setTrackNames(names);
         } else {
-          setError("Failed to load soundscape");
+          console.error("API returned success: false", data);
+          setError("Failed to load soundscape: " + (data.message || "Unknown error"));
         }
       } catch (err) {
         console.error("Error fetching soundscape:", err);
-        setError("Error loading soundscape. It may not exist or has been deleted.");
+        setError("Error loading soundscape. It may not exist or has been deleted. Details: " + (err instanceof Error ? err.message : String(err)));
       } finally {
         setIsLoading(false);
       }
@@ -150,6 +153,7 @@ export default function SoundscapePage() {
                   initialPans={soundPans}
                   trackNames={trackNames}
                   readOnly={true}
+                  imageUrl={soundscapeDetails.soundscape.image_url}
                 />
               ) : (
                 <p>No sounds available in this soundscape.</p>

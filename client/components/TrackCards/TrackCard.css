@@ -144,3 +144,44 @@
     transition: width 0.1s linear;
   }
   
+.soundscape-card {
+  border: 2px solid #F4671F;
+  box-shadow: 0 4px 12px rgba(244, 103, 31, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.soundscape-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(244, 103, 31, 0.25);
+}
+
+.soundscape-badge {
+  display: none;
+}
+
+.soundscape-badge-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(90deg, #F14A21 0%, #F7861C 100%);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 4px 12px;
+  border-radius: 12px;
+  z-index: 2;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Add a gradient overlay for soundscape cards */
+.soundscape-card .track-control:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(244, 103, 31, 0.1), rgba(244, 103, 31, 0.3));
+  pointer-events: none;
+}
+  

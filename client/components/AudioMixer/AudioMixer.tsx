@@ -69,7 +69,8 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
   title,
   readOnly = false,
   trackNames : initialTrackNames = [], // renamed prop
-  soundscapeId
+  soundscapeId,
+  imageUrl
 }) => {
 
   const [tracks, setTracks] = useState<AudioTrack[]>([]);
@@ -88,7 +89,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<SoundscapeResponse | null>(null);
 
-  const [imageUrl, setImageUrl] = useState("");
+  const [localImageUrl, setLocalImageUrl] = useState<string>(imageUrl || "");
   const [soundDescription, setDescription] = useState("");
 
   const [play, setPlay] = useState<boolean>(true);
@@ -251,19 +252,29 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
 
   useEffect(() => {
     if (!title) return;
-  
-    const fetchImage = async () => {
-      const image = await getImage(title);
-      console.log("This is the image URL:", image);
-      setImageUrl(image);
+
+    const fetchImageAndDescription = async () => {
+      // Fetch image if not already set
+      if (!localImageUrl && title) {
+        try {
+          const imageResult = await getImage(title);
+          setLocalImageUrl(imageResult);
+        } catch (error) {
+          console.error("Failed to fetch image:", error);
+        }
+      }
+
+      // Fetch description
+      try {
+        const descriptionResult = await getDescription(title);
+        setDescription(descriptionResult);
+      } catch (error) {
+        console.error("Failed to fetch description:", error);
+      }
     };
 
-    // const joinedTrack = trackNames.join(", ");
-    const sound_description = getDescription(title);
-    setDescription(sound_description);
-    
-    fetchImage();
-  }, [title, trackNames]);
+    fetchImageAndDescription();
+  }, [title, localImageUrl]);
 
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -803,10 +814,28 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
           </div>
 
           <div className="img-container">
-            <img
-                src={imageUrl}
-                className="audio-image"
-            />
+            {localImageUrl ? (
+              <div className="player-image-container">
+                <img 
+                  src={localImageUrl} 
+                  alt={title || "Soundscape"} 
+                  className="player-image"
+                />
+                <canvas
+                  ref={canvasRef}
+                  width={200}
+                  height={30}
+                  className="waveform-overlay"
+                />
+              </div>
+            ) : (
+              <canvas
+                ref={canvasRef}
+                width={200}
+                height={100}
+                className="waveform"
+              />
+            )}
           </div> 
   
           <div className="audio-progress ">

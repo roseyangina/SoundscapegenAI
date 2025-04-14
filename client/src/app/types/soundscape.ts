@@ -16,15 +16,18 @@ export interface SoundscapeResponse {
     soundscape_id: number;
     name: string;
     description: string;
+    image_url?: string;
   };
 }
 
 export interface SoundscapeDetails {
   success: boolean;
+  message?: string;
   soundscape: {
     soundscape_id: number;
     name: string;
     description: string;
+    image_url?: string;
   };
   sounds: Array<{
     preview_url: string;

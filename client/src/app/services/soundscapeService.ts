@@ -109,13 +109,23 @@ export async function createSoundscape(name: string, description: string, soundI
 }
 
 export async function getSoundscapeById(id: string): Promise<SoundscapeDetails> {
-  const res = await fetch(`${API_BASE_URL}/api/soundscapes/${id}`);
-  
-  if (!res.ok) {
-    throw new Error(`Failed to fetch soundscape: ${res.status}`);
-  }
+  console.log(`Fetching soundscape with ID: ${id} from ${API_BASE_URL}/api/soundscapes/${id}`);
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/soundscapes/${id}`);
+    
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Failed to fetch soundscape: HTTP ${res.status}, Response: ${errorText}`);
+      throw new Error(`Failed to fetch soundscape: ${res.status} - ${errorText}`);
+    }
 
-  return await res.json();
+    const data = await res.json();
+    console.log('Received soundscape data:', data);
+    return data;
+  } catch (error) {
+    console.error("Error in getSoundscapeById:", error);
+    throw error;
+  }
 }
 
 export async function getTrackNames(sounds: Sound[]): Promise<Sound[]> {

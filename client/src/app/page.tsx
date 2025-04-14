@@ -38,42 +38,41 @@ export default function Home() {
 
   // ****New state for homepage sounds:***
   const [homepageSounds, setHomepageSounds] = useState<any[]>([]);
+  const [presetSoundscapes, setPresetSoundscapes] = useState<any[]>([]);
+  
   // Fetch homepage sounds when component mounts:
   useEffect(() => {
-    async function fetchHomepageSounds() {
+    async function fetchHomepageSoundscapes() {
       try {
         const res = await fetch("http://localhost:3001/api/homepage-sounds");
         if (!res.ok) {
-          throw new Error("Failed to fetch homepage sounds");
+          throw new Error("Failed to fetch homepage soundscapes");
         }
         const data = await res.json();
         if (data.success) {
-          setHomepageSounds(data.sounds);
+          setPresetSoundscapes(data.soundscapes);
         }
       } catch (error) {
-        console.error("Error fetching homepage sounds:", error);
+        console.error("Error fetching homepage soundscapes:", error);
       }
     }
-    fetchHomepageSounds();
+    fetchHomepageSoundscapes();
   }, []);
 
-  async function fetchHomepageSounds() {
+  async function fetchHomepageSoundscapes() {
     try {
       const res = await fetch("http://localhost:3001/api/homepage-sounds");
-      console.log("Response status:", res.status);
-      const text = await res.text();
-      console.log("Response text:", text);
       if (!res.ok) {
-        throw new Error("Failed to fetch homepage sounds");
+        throw new Error("Failed to fetch homepage soundscapes");
       }
-      const data = JSON.parse(text);
+      const data = await res.json();
       if (data.success) {
-        setHomepageSounds(data.sounds);
+        setPresetSoundscapes(data.soundscapes);
       }
     } catch (error) {
-      console.error("Error fetching homepage sounds:", error);
+      console.error("Error fetching homepage soundscapes:", error);
     }
-  }  
+  }
 
   async function handleSubmit(e: React.MouseEvent<HTMLButtonElement>) {
     // Clear previous errors and set loading state
@@ -398,7 +397,7 @@ export default function Home() {
 
       {/* ------------------ Updated Popular Sounds Section ------------------ */}
       <div id="popular" className="popular">
-        <h2>Popular Sounds</h2>
+        <h2>Popular Soundscapes</h2>
         <div className="dash3"></div>
         <h3 className="category-title">Category</h3>
         <div className="popular-container">
@@ -408,58 +407,58 @@ export default function Home() {
           />
           <div className="category-tracks">
             <div className="track-subcate-container">
-            <div className="chosenCategory">
-              {selectedCategories.length > 0 ? (
-                selectedCategories.map((cat, index) => (
-                  <div key={index} className="chosen-wrapper">
-                    <p className="chosen">{cat}</p>
-                    <button 
-                      className="remove-category" 
-                      onClick={() => handleCategorySelect(cat)}
-                      aria-label={`Remove ${cat} filter`}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p className="chosen-default">All Categories</p>
+              <div className="chosenCategory">
+                {selectedCategories.length > 0 ? (
+                  selectedCategories.map((cat, index) => (
+                    <div key={index} className="chosen-wrapper">
+                      <p className="chosen">{cat}</p>
+                      <button 
+                        className="remove-category" 
+                        onClick={() => handleCategorySelect(cat)}
+                        aria-label={`Remove ${cat} filter`}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="chosen-default">All Categories</p>
+                )}
+              </div>
+              {selectedCategories.length > 0 && (
+                <button 
+                  className="clearFilters" 
+                  onClick={() => setSelectedCategories([])}
+                  style={{ 
+                    border: 'none', 
+                    background: 'transparent', 
+                    color: '#F4671F', 
+                    cursor: 'pointer',
+                    fontWeight: 'bold' 
+                  }}
+                >
+                  Clear Filters
+                </button>
               )}
             </div>
-            {selectedCategories.length > 0 && (
-              <button 
-                className="clearFilters" 
-                onClick={() => setSelectedCategories([])}
-                style={{ 
-                  border: 'none', 
-                  background: 'transparent', 
-                  color: '#F4671F', 
-                  cursor: 'pointer',
-                  fontWeight: 'bold' 
-                }}
-              >
-                Clear Filters
-              </button>
-            )}
-          </div>
-          <div className="tracks">
-            {(filteredSounds.length > 0 ? filteredSounds : homepageSounds).map((sound, index) => (
-              <TrackCard
-                key={index}
-                sound_id={sound.sound_id}
-                imageUrl={sound.image_url || "/spaceshipFlying.jpg"}
-                altText={sound.name}
-                name={sound.name}
-                description={sound.description}
-                previewUrl={sound.preview_url}
-                />
-              ))
-            }
-            {filteredSounds.length === 0 && selectedCategories.length > 0 && (
-              <div style={{ textAlign: 'center', padding: '30px', color: '#868686' }}>
-                No sounds match the selected categories.
-              </div>
-            )}
+            <div className="tracks">
+              {(presetSoundscapes && presetSoundscapes.length > 0) ? (
+                presetSoundscapes.map((soundscape, index) => (
+                  <TrackCard
+                    key={index}
+                    soundscape_id={soundscape.soundscape_id}
+                    imageUrl={soundscape.image_url || "/spaceshipFlying.jpg"}
+                    altText={soundscape.name}
+                    name={soundscape.name}
+                    description={soundscape.description}
+                    isSoundscape={true}
+                  />
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', padding: '30px', color: '#868686' }}>
+                  No preset soundscapes available. Try creating your own!
+                </div>
+              )}
             </div>
           </div>
         </div>
