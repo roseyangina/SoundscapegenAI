@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 
 import Navbar from "../../components/Navbar/Navbar";
-import RecentlyCard from "../../components/RecentlyCards/RecentlyCard";
 import TrackCard from "../../components/TrackCards/TrackCard";
 import Category from "../../components/Category/Category";
 import About from "../../components/About/About";
@@ -433,19 +432,6 @@ function HomeContent() {
           )}
         </div>
       )}
-
-      {user && (
-        <div className="recently-listen">
-          <h2>Recently Listen</h2>
-          <div className="dash3"></div>
-          <div className="listen-container">
-            <RecentlyCard />
-            <RecentlyCard />
-            <RecentlyCard />
-          </div>
-        </div>
-      )}
-
 
       {/* ------------------ Popular Sounds Section ------------------ */}
       <div id="popular" className="popular">

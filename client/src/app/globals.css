@@ -111,12 +111,7 @@ input[type=text] {
   color: #F4671F;
 }
 
-.recently-listen {
-  margin-left: 100px;
-  margin-top: 90px;
-  margin-bottom: 50px;
-}
-
+/* Only keep the .dash3 class as it's used elsewhere */
 .dash3 {
   width: 92%;
   border: 1px #D1D1D1 solid;
@@ -127,17 +122,6 @@ h2 {
   font-size: 24px;
   font-weight: bold;
 }
-
-.listen-container {
-  display: flex;
-  flex-direction: row;
-  overflow-x: auto;
-  gap: 22px;
-  scrollbar-width: thin; 
-  -ms-overflow-style: none; 
-  max-width: 92%; 
-  padding-bottom: 8px;
-} 
 
 .popular {
   margin-left: 100px;
