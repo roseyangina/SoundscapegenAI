@@ -130,7 +130,8 @@ dist
 .pnp.*
 
 # sound server files
-server/public/sounds
+# Exclude the sounds directory except for specific files
+server/public/sounds/*
 # Exclude all audio files
 *.wav
 *.mp3
