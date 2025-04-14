@@ -131,14 +131,21 @@ dist
 
 # sound server files
 server/public/sounds
+# Exclude all audio files
 *.wav
 *.mp3
 *.ogg
 *.m4a
-*.wav
-*.mp3
-*.ogg
-*.m4a
+
+# But allow these specific files
+!server/public/sounds/0_1744650905570.mp3
+!server/public/sounds/0_1744650905653.mp3
+!server/public/sounds/0_1744650905662.mp3
+!server/public/sounds/0_1744650905679.mp3
+!server/public/sounds/0_1744650905684.mp3
+!server/public/sounds/0_1744651370208.mp3
+!server/public/sounds/0_1744651370225.mp3
+!server/public/sounds/0_1744651370237.mp3
 
 # DS-Store
 .DS_Store
