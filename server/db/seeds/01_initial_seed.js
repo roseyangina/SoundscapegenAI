@@ -178,21 +178,24 @@ exports.seed = async function(knex) {
       name: 'River Flowing',
       description: 'River Flowing Soundscape',
       is_preset: true,
-      image_url: 'https://images.unsplash.com/photo-1642786842195-29e65bd0d0d0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3MzY0OTh8MHwxfHNlYXJjaHwxfHxSaXZlciUyMGZsb3dpbmclMjAtJTIwV2F0ZXIlMjBidWJibGluZ3xlbnwwfHx8fDE3NDQ2NDU2NDh8MA&ixlib=rb-4.0.3&q=80&w=400'
+      image_url: 'https://images.unsplash.com/photo-1642786842195-29e65bd0d0d0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3MzY0OTh8MHwxfHNlYXJjaHwxfHxSaXZlciUyMGZsb3dpbmclMjAtJTIwV2F0ZXIlMjBidWJibGluZ3xlbnwwfHx8fDE3NDQ2NDU2NDh8MA&ixlib=rb-4.0.3&q=80&w=400',
+      tags: ['Nature', 'Water', 'Calming', 'Relaxing', 'Outdoors']
     },
     {
       soundscape_id: 2,
       name: 'Spaceship in Flight',
       description: 'Spaceship in Flight Soundscape',
       is_preset: true,
-      image_url: 'https://images.unsplash.com/photo-1538370965046-79c0d6907d47?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=400'
+      image_url: 'https://images.unsplash.com/photo-1538370965046-79c0d6907d47?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=400',
+      tags: ['Sci-Fi', 'Ambient', 'Machine', 'Space', 'Futuristic']
     },
     {
       soundscape_id: 3,
       name: 'Sunny Day',
       description: 'Sunny Day Soundscape',
       is_preset: true,
-      image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=400'
+      image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=400',
+      tags: ['Nature', 'Birds', 'Outdoors', 'Calming', 'Daytime']
     }
   ];
   

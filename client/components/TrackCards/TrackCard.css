@@ -57,7 +57,7 @@
     color: #868686;
     font-size: 16px;
     font-weight: 400;
-    padding-bottom: 20px;
+    padding-bottom: 10px;
 }
 
 .tags {
@@ -65,24 +65,26 @@
     flex-wrap: wrap;
     font-size: 14px;
     font-weight: 400;
-    padding-top: 18px;
+    padding-top: 10px;
+    gap: 6px;
+    align-items: center;
 }
 
 .tag-label {
     margin-right: 8px;
     color: #555;
-  }
+}
   
-  .tag-pill {
+.tag-pill {
     background-color: #f0f0f0;
     padding: 4px 10px;
     border-radius: 20px;
-    margin-right: 6px;
-    margin-bottom: 6px;
+    margin-right: 2px;
     font-size: 0.85rem;
     color: #333;
-  }
-  
+    display: inline-block;
+}
+
 .stats {
     display: flex;
     justify-content: center;

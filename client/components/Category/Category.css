@@ -2,7 +2,7 @@
     display: flex; 
     flex-direction: column;
     margin-top: 20px;
-    width: 15%;
+    width: 100%;
     gap: 20px;
 }
 
@@ -13,10 +13,12 @@
     font-weight: 700;
     background-color: white;
     border: solid black;
-    padding: 6px 13px;
+    padding: 8px 15px;
     border-radius: 2px;
     cursor: pointer;
     transition: all 0.3s ease 0s;
+    width: 100%;
+    max-width: 250px;
 }
 
 .category-button:hover {
@@ -36,18 +38,22 @@
     font-size: 14px;
     font-weight: 500;
     font-family: Poppins;
-    margin-top: 5px;
+    margin-top: 8px;
     padding-left: 0;
     margin-left: 0;
+    width: 100%;
+    max-width: 250px;
 }
 
 .subcategory ul li {
     transition: all 0.2s ease;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 6px 12px;
     border-radius: 4px;
     position: relative;
+    white-space: normal;
+    word-wrap: break-word;
 }
 
 .subcategory ul li:hover {
@@ -61,6 +67,14 @@
     border-left: 3px solid #F4671F;
     background-color: #FAF0ED;
     margin-left: 0;
-    padding: 4px 8px 4px 5px;
+    padding: 6px 12px 6px 9px;
+    width: 100%;
+}
+
+.selected-category {
+    background-color: #F4671F !important;
+    color: white !important;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(244, 103, 31, 0.3);
 }
 

@@ -26,8 +26,11 @@ const TrackCard: React.FC<TrackCardProps> = ({
   name,      
   description, 
   previewUrl,
+  tags = [],
   isSoundscape = false
 }) => {
+  // Add console.log to debug the tags
+  console.log(`TrackCard for ${name}, tags:`, tags);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressContainerRef = useRef<HTMLDivElement>(null);
@@ -91,15 +94,6 @@ const TrackCard: React.FC<TrackCardProps> = ({
     }
   }, []);
 
-  let resolvedTags: string[] = [];
-  if (sound_id === 1) {
-    resolvedTags = ['Birds', 'Wind', 'Forest'];
-  } else if (sound_id === 2) {
-    resolvedTags = ['Study', 'Beats', 'Lo-fi'];
-  } else if (sound_id === 3) {
-    resolvedTags = ['Deep Wave', 'Piano', 'Chill'];
-  }
-
   return (
     <div className={`track-card ${isSoundscape ? 'soundscape-card' : ''}`} onClick={handleCardClick}>
       <div className="track-control" style={{ position: 'relative', cursor: 'pointer' }}>
@@ -117,20 +111,18 @@ const TrackCard: React.FC<TrackCardProps> = ({
             <div className="progress-bar" style={{ width: `${progress}%` }} />
           </div>
         )}
-        {isSoundscape && (
-          <div className="soundscape-badge-overlay">
-            <span>Soundscape</span>
-          </div>
-        )}
       </div>
       <div className="info-track">
         <span className="date">{date}</span>
         <h3>{name}</h3>
-        <p className="track-description">{description}</p>
-        {resolvedTags.length > 0 && (
+        {/* Only show description for non-soundscape items */}
+        {!isSoundscape && description && (
+          <p className="track-description">{description}</p>
+        )}
+        {tags && tags.length > 0 && (
           <div className="tags">
             <span className="tag-label"><strong>Tags:</strong></span>
-              {resolvedTags.map((tag, index) => (
+              {tags.map((tag, index) => (
                 <span className="tag-pill" key={index}>
                   {tag}
               </span>

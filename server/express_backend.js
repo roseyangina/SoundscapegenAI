@@ -965,27 +965,64 @@ app.get('/api/user/profile', isAuthenticated, (req, res) => {
 
 app.get('/api/homepage-sounds', async (req, res) => {
     const cacheKey = 'homepage:preset_soundscapes';
+    const tagFilter = req.query.tag ? req.query.tag : null;
+    
+    console.log(`[Homepage] Received request with tag filter: ${tagFilter || 'none'}`);
+    
     try {
-      // Check if the preset soundscapes are cached in Redis
-      if (redisClient.isReady) {
+      // Only check cache if no tag filter is applied
+      if (!tagFilter && redisClient.isReady) {
         const cachedSoundscapes = await redisClient.get(cacheKey);
         if (cachedSoundscapes) {
           console.log('Cache hit for homepage preset soundscapes');
           return res.status(200).json({ success: true, soundscapes: JSON.parse(cachedSoundscapes) });
         }
       } else {
-        console.warn('Redis client not ready, skipping cache check');
+        console.warn('Redis client not ready or tag filter applied, skipping cache check');
       }
   
       // If not cached, query the database for preset soundscapes
       const db = require('./db/config');
       
-      // First get the preset soundscapes
-      const soundscapesResult = await db.query(`
-        SELECT * FROM "Soundscape" 
-        WHERE is_preset = true 
-        ORDER BY created_at DESC
-      `);
+      // Construct query based on whether there's a tag filter
+      let soundscapesResult;
+      if (tagFilter) {
+        console.log(`[Homepage] Filtering soundscapes by tag: ${tagFilter}`);
+        
+        // Log all soundscape tags before filtering to help debug
+        const allSoundscapes = await db.query(`
+          SELECT soundscape_id, name, tags
+          FROM "Soundscape"
+          WHERE is_preset = true
+        `);
+        
+        console.log('[Homepage] All soundscapes and their tags:');
+        allSoundscapes.rows.forEach(s => {
+          console.log(`- Soundscape ${s.soundscape_id}: ${s.name}, Tags: ${JSON.stringify(s.tags)}`);
+        });
+        
+        // Use array_to_string to do case-insensitive comparison
+        soundscapesResult = await db.query(`
+          SELECT * FROM "Soundscape" 
+          WHERE is_preset = true 
+          AND (
+            array_to_string(tags, ',') ILIKE $1
+            OR
+            EXISTS (SELECT 1 FROM unnest(tags) tag WHERE LOWER(tag) = LOWER($2))
+          )
+          ORDER BY created_at DESC
+        `, [`%${tagFilter}%`, tagFilter]);
+        
+        console.log(`[Homepage] Found ${soundscapesResult.rowCount} soundscapes matching tag: ${tagFilter}`);
+      } else {
+        soundscapesResult = await db.query(`
+          SELECT * FROM "Soundscape" 
+          WHERE is_preset = true 
+          ORDER BY created_at DESC
+        `);
+        
+        console.log(`[Homepage] Found ${soundscapesResult.rowCount} total preset soundscapes`);
+      }
       
       // For each soundscape, also get its associated sounds
       const soundscapesWithSounds = await Promise.all(
@@ -998,6 +1035,9 @@ app.get('/api/homepage-sounds', async (req, res) => {
             [soundscape.soundscape_id]
           );
           
+          // Log the tags for each soundscape to help with debugging
+          console.log(`[Homepage] Soundscape ${soundscape.name} has tags: ${JSON.stringify(soundscape.tags || [])}`);
+          
           return {
             ...soundscape,
             sounds: soundsResult.rows
@@ -1005,8 +1045,8 @@ app.get('/api/homepage-sounds', async (req, res) => {
         })
       );
       
-      // Cache the result in Redis for one hour (3600 seconds)
-      if (redisClient.isReady) {
+      // Cache the result in Redis for one hour (3600 seconds) if no tag filter
+      if (!tagFilter && redisClient.isReady) {
         await redisClient.set(cacheKey, JSON.stringify(soundscapesWithSounds), { EX: 3600 });
       }
       
@@ -1018,7 +1058,7 @@ app.get('/api/homepage-sounds', async (req, res) => {
         message: 'Error fetching homepage preset soundscapes: ' + error.message 
       });
     }
-  });
+});
   
 // Add error handling middleware
 app.use((err, req, res, next) => {

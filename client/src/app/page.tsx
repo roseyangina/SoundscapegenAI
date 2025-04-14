@@ -52,35 +52,43 @@ function HomeContent() {
   
   // Fetch homepage sounds when component mounts:
   useEffect(() => {
-    async function fetchHomepageSoundscapes() {
-      try {
-        const res = await fetch("http://localhost:3001/api/homepage-sounds");
-        if (!res.ok) {
-          throw new Error("Failed to fetch homepage soundscapes");
-        }
-        const data = await res.json();
-        if (data.success) {
-          setPresetSoundscapes(data.soundscapes);
-        }
-      } catch (error) {
-        console.error("Error fetching homepage soundscapes:", error);
-      }
-    }
     fetchHomepageSoundscapes();
-  }, []);
+  }, [selectedCategories]);
 
   async function fetchHomepageSoundscapes() {
     try {
-      const res = await fetch("http://localhost:3001/api/homepage-sounds");
-      if (!res.ok) {
-        throw new Error("Failed to fetch homepage soundscapes");
+      // Construct URL with tag filter if categories are selected
+      let url = "http://localhost:3001/api/homepage-sounds";
+      
+      // Add tag filter if a category is selected (we only support single selection for server-side filtering)
+      if (selectedCategories.length === 1) {
+        url += `?tag=${encodeURIComponent(selectedCategories[0])}`;
       }
+      
+      console.log(`Fetching soundscapes with URL: ${url}`);
+      const res = await fetch(url);
+      
+      if (!res.ok) {
+        throw new Error(`Failed to fetch homepage soundscapes: ${res.statusText}`);
+      }
+      
       const data = await res.json();
+      
       if (data.success) {
+        console.log(`Retrieved ${data.soundscapes.length} soundscapes from server`);
+        
+        // Debug each soundscape's tags
+        data.soundscapes.forEach((soundscape: any) => {
+          console.log(`Soundscape ${soundscape.name} has tags:`, soundscape.tags);
+        });
+        
         setPresetSoundscapes(data.soundscapes);
+      } else {
+        console.error("API returned success: false", data);
       }
     } catch (error) {
       console.error("Error fetching homepage soundscapes:", error);
+      setPresetSoundscapes([]);
     }
   }
 
@@ -243,15 +251,21 @@ function HomeContent() {
 
   // Handle category selection
   const handleCategorySelect = (category: string) => {
+    console.log(`Category selected: ${category}, current selections: ${selectedCategories.join(', ')}`);
+    
+    // If this category is already selected, deselect it
     if (selectedCategories.includes(category)) {
-      setSelectedCategories(selectedCategories.filter(cat => cat !== category));
+      console.log(`Removing category: ${category}`);
+      setSelectedCategories([]);
     } else {
-      setSelectedCategories([...selectedCategories, category]);
+      // Replace the current selection with this category (single select mode)
+      console.log(`Setting new category: ${category}`);
+      setSelectedCategories([category]);
     }
   };
 
-  // Filter sounds based on selected categories
-  // Need to add fetching from backend in future
+  // Filter sounds is not used for the main soundscapes - filtering is done on server side now
+  // But we keep this for other parts of the UI that might need client-side filtering
   const filteredSounds = homepageSounds.filter(sound => {
     if (selectedCategories.length === 0) return true;
     
@@ -290,7 +304,9 @@ function HomeContent() {
           }}
         />
         <button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? 'Processing...' : (
+          {isLoading ? (
+            <div className="spinner" style={{ width: '20px', height: '20px', margin: '0' }}></div>
+          ) : (
             <svg id="Search--Streamline-Carbon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="24" width="24">
               <desc>Search Streamline Icon: https://streamlinehq.com</desc>
               <defs></defs>
@@ -336,22 +352,35 @@ function HomeContent() {
       {activeTab === "create" ? (
         <div>
           {response?.sounds && response.sounds.length > 0 && (
-            <div>
+            <div className="creating-soundscape-container">
               <h2>Found {response.sounds.length} sounds</h2>
               <button 
+                className="create-soundscape-button"
                 onClick={handleCreateSoundscape} 
                 disabled={isCreatingSoundscape}
               >
-                {isCreatingSoundscape ? 'Creating Soundscape...' : 'Create Soundscape'}
+                {isCreatingSoundscape ? (
+                  <>
+                    <div className="spinner" style={{ width: '20px', height: '20px', marginRight: '10px' }}></div>
+                    Creating Soundscape...
+                  </>
+                ) : 'Create Soundscape'}
               </button>
             </div>
           )}
 
           {soundscapeResult && (
-            <div>
+            <div className="creating-soundscape-container">
               <h2>Soundscape Created!</h2>
               <p>Name: {soundscapeResult.soundscape.name}</p>
               <p>ID: {soundscapeResult.soundscape.soundscape_id}</p>
+              <button 
+                className="create-soundscape-button" 
+                onClick={() => window.location.href = `/soundscape/${soundscapeResult.soundscape.soundscape_id}`}
+                style={{ marginTop: '15px' }}
+              >
+                View Soundscape
+              </button>
             </div>
           )}
 
@@ -359,34 +388,47 @@ function HomeContent() {
         </div>
       ) : (
         <div>
-          <form onSubmit={fetchSoundscape}>
-            <input
-              type="text"
-              value={soundscapeId}
-              onChange={(e) => setSoundscapeId(e.target.value)}
-              placeholder="Enter Soundscape ID..."
-            />
-            <button type="submit" disabled={isLoadingSoundscape}>
-              {isLoadingSoundscape ? 'Loading...' : 'View Soundscape'}
-            </button>
+          <form onSubmit={fetchSoundscape} className="creating-soundscape-container">
+            <h2>View Existing Soundscape</h2>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+              <input
+                type="text"
+                value={soundscapeId}
+                onChange={(e) => setSoundscapeId(e.target.value)}
+                placeholder="Enter Soundscape ID..."
+                style={{ 
+                  padding: '10px',
+                  borderRadius: '4px',
+                  border: '1px solid #ccc',
+                  fontSize: '16px'
+                }}
+              />
+              <button 
+                type="submit" 
+                disabled={isLoadingSoundscape}
+                className="create-soundscape-button"
+                style={{ minWidth: 'auto' }}
+              >
+                {isLoadingSoundscape ? (
+                  <>
+                    <div className="spinner" style={{ width: '20px', height: '20px', marginRight: '10px' }}></div>
+                    Loading...
+                  </>
+                ) : 'View Soundscape'}
+              </button>
+            </div>
           </form>
 
           {soundscapeDetails && (
-            <div>
+            <div className="creating-soundscape-container">
               <h2>Soundscape: {soundscapeDetails.soundscape.name}</h2>
-              <p>Description: {soundscapeDetails.soundscape.description}</p>
-              <h3>Sounds:</h3>
-              <ul>
-                {soundscapeDetails.sounds.map((sound) => (
-                  <li key={sound.sound_id}>
-                    <h4>{sound.name}</h4>
-                    <p>{sound.description}</p>
-                    {sound.file_path && (
-                      <audio controls src={`http://localhost:3001${sound.file_path}`} />
-                    )}
-                  </li>
-                ))}
-              </ul>
+              <button 
+                className="create-soundscape-button" 
+                onClick={() => window.location.href = `/soundscape/${soundscapeDetails.soundscape.soundscape_id}`}
+                style={{ marginTop: '15px' }}
+              >
+                Go to Soundscape
+              </button>
             </div>
           )}
         </div>
@@ -405,18 +447,20 @@ function HomeContent() {
       )}
 
 
-      {/* ------------------ Updated Popular Sounds Section ------------------ */}
+      {/* ------------------ Popular Sounds Section ------------------ */}
       <div id="popular" className="popular">
         <h2>Popular Soundscapes</h2>
         <div className="dash3"></div>
-        <h3 className="category-title">Category</h3>
         <div className="popular-container">
-          <Category 
-            onCategorySelect={handleCategorySelect} 
-            selectedCategories={selectedCategories}
-          />
-          <div className="category-tracks">
-            <div className="track-subcate-container">
+          <div className="left-panel">
+            <h3 className="category-title">Category</h3>
+            <Category 
+              onCategorySelect={handleCategorySelect} 
+              selectedCategories={selectedCategories}
+            />
+          </div>
+          <div className="right-panel">
+            <div className="category-tracks">
               <div className="chosenCategory">
                 {selectedCategories.length > 0 ? (
                   selectedCategories.map((cat, index) => (
@@ -434,22 +478,23 @@ function HomeContent() {
                 ) : (
                   <p className="chosen-default">All Categories</p>
                 )}
+                {selectedCategories.length > 0 && (
+                  <button 
+                    className="clearFilters" 
+                    onClick={() => setSelectedCategories([])}
+                    style={{ 
+                      border: 'none', 
+                      background: 'transparent', 
+                      color: '#F4671F', 
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      marginLeft: '10px'
+                    }}
+                  >
+                    Clear Filters
+                  </button>
+                )}
               </div>
-              {selectedCategories.length > 0 && (
-                <button 
-                  className="clearFilters" 
-                  onClick={() => setSelectedCategories([])}
-                  style={{ 
-                    border: 'none', 
-                    background: 'transparent', 
-                    color: '#F4671F', 
-                    cursor: 'pointer',
-                    fontWeight: 'bold' 
-                  }}
-                >
-                  Clear Filters
-                </button>
-              )}
             </div>
             <div className="tracks">
               {(presetSoundscapes && presetSoundscapes.length > 0) ? (
@@ -461,12 +506,13 @@ function HomeContent() {
                     altText={soundscape.name}
                     name={soundscape.name}
                     description={soundscape.description}
+                    tags={soundscape.tags || []}
                     isSoundscape={true}
                   />
                 ))
               ) : (
                 <div style={{ textAlign: 'center', padding: '30px', color: '#868686' }}>
-                  No preset soundscapes available. Try creating your own!
+                  No soundscapes available for the selected category. Try selecting a different category.
                 </div>
               )}
             </div>

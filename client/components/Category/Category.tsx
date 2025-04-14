@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import './Category.css';
 
-type CategoryType = 'nature' | 'urban' | 'scifi' | 'fantasy';
+type CategoryType = 'nature' | 'ambient' | 'space' | 'calming';
 
 type SubcategoryData = {
   [key in CategoryType]: string[];
@@ -15,27 +15,31 @@ interface CategoryProps {
 }
 
 const Category: React.FC<CategoryProps> = ({ onCategorySelect, selectedCategories }) => {
-  const [showNature, setShowNature] = useState<boolean>(false);
-  const [showUrban, setShowUrban] = useState<boolean>(false);
-  const [showScifi, setShowScifi] = useState<boolean>(false);
-  const [showFantasy, setShowFantasy] = useState<boolean>(false);
+  const [showNature, setShowNature] = useState<boolean>(true);
+  const [showAmbient, setShowAmbient] = useState<boolean>(false);
+  const [showSpace, setShowSpace] = useState<boolean>(false);
+  const [showCalming, setShowCalming] = useState<boolean>(false);
 
   const subcategories: SubcategoryData = {
-    nature: ['Ocean Waves', 'Forest', 'Rainfall', 'Wind', 'Birds', 'Waterfall'],
-    urban: ['City Traffic', 'Café', 'Subway', 'Construction', 'Crowd', 'Office'],
-    scifi: ['Spaceship', 'Alien World', 'Computer', 'Laser', 'Robotics', 'Warp Drive'],
-    fantasy: ['Magic', 'Dragons', 'Castle', 'Mystical Forest', 'Medieval Town', 'Crystal Cave']
+    nature: ['Nature', 'Water', 'Birds', 'Outdoors', 'Waterfall', 'Forest'],
+    ambient: ['Ambient', 'Machine', 'Wind', 'Rain', 'Environment'],
+    space: ['Space', 'Sci-Fi', 'Futuristic', 'Machine'],
+    calming: ['Calming', 'Relaxing', 'Daytime', 'Peaceful']
+  };
+
+  const hasCategorySelected = (category: string[]): boolean => {
+    return category.some(subcategory => selectedCategories.includes(subcategory));
   };
 
   const toggleSubcategories = (category: CategoryType) => {
     if (category === 'nature') {
       setShowNature(!showNature);
-    } else if (category === 'urban') {
-      setShowUrban(!showUrban);
-    } else if (category === 'scifi') {
-      setShowScifi(!showScifi);
-    } else if (category === 'fantasy') {
-      setShowFantasy(!showFantasy);
+    } else if (category === 'ambient') {
+      setShowAmbient(!showAmbient);
+    } else if (category === 'space') {
+      setShowSpace(!showSpace);
+    } else if (category === 'calming') {
+      setShowCalming(!showCalming);
     }
   };
 
@@ -45,11 +49,13 @@ const Category: React.FC<CategoryProps> = ({ onCategorySelect, selectedCategorie
     }
   };
 
+  console.log("Category component - selectedCategories:", selectedCategories);
+
   return (
     <div className="category-container">
       <div className="category" id="nature">
         <button
-          className="category-button"
+          className={`category-button ${hasCategorySelected(subcategories.nature) ? 'selected-category' : ''}`}
           onClick={() => toggleSubcategories('nature')}
         >
           Nature
@@ -71,19 +77,19 @@ const Category: React.FC<CategoryProps> = ({ onCategorySelect, selectedCategorie
         )}
       </div>
 
-      <div className="category" id="urban">
+      <div className="category" id="ambient">
         <button
-          className="category-button"
-          onClick={() => toggleSubcategories('urban')}
+          className={`category-button ${hasCategorySelected(subcategories.ambient) ? 'selected-category' : ''}`}
+          onClick={() => toggleSubcategories('ambient')}
         >
-          Urban & City
+          Ambient Sounds
         </button>
-        {showUrban && (
-          <div className="subcategory" id="urban-sub">
+        {showAmbient && (
+          <div className="subcategory" id="ambient-sub">
             <ul>
-              {subcategories.urban.map((item, index) => (
+              {subcategories.ambient.map((item, index) => (
                 <li 
-                  key={`urban-${index}`} 
+                  key={`ambient-${index}`} 
                   className={`subcategory-button ${selectedCategories.includes(item) ? 'selected' : ''}`}
                   onClick={() => handleSubcategoryClick(item)}
                 >
@@ -95,19 +101,19 @@ const Category: React.FC<CategoryProps> = ({ onCategorySelect, selectedCategorie
         )}
       </div>
 
-      <div className="category" id="scifi">
+      <div className="category" id="space">
         <button
-          className="category-button"
-          onClick={() => toggleSubcategories('scifi')}
+          className={`category-button ${hasCategorySelected(subcategories.space) ? 'selected-category' : ''}`}
+          onClick={() => toggleSubcategories('space')}
         >
-          Sci-Fi & Futuristic
+          Sci-Fi & Space
         </button>
-        {showScifi && (
-          <div className="subcategory" id="scifi-sub">
+        {showSpace && (
+          <div className="subcategory" id="space-sub">
             <ul>
-              {subcategories.scifi.map((item, index) => (
+              {subcategories.space.map((item, index) => (
                 <li 
-                  key={`scifi-${index}`} 
+                  key={`space-${index}`} 
                   className={`subcategory-button ${selectedCategories.includes(item) ? 'selected' : ''}`}
                   onClick={() => handleSubcategoryClick(item)}
                 >
@@ -119,19 +125,19 @@ const Category: React.FC<CategoryProps> = ({ onCategorySelect, selectedCategorie
         )}
       </div>
 
-      <div className="category" id="fantasy">
+      <div className="category" id="calming">
         <button
-          className="category-button"
-          onClick={() => toggleSubcategories('fantasy')}
+          className={`category-button ${hasCategorySelected(subcategories.calming) ? 'selected-category' : ''}`}
+          onClick={() => toggleSubcategories('calming')}
         >
-          Fantasy & Mystical
+          Calming & Relaxing
         </button>
-        {showFantasy && (
-          <div className="subcategory" id="fantasy-sub">
+        {showCalming && (
+          <div className="subcategory" id="calming-sub">
             <ul>
-              {subcategories.fantasy.map((item, index) => (
+              {subcategories.calming.map((item, index) => (
                 <li 
-                  key={`fantasy-${index}`} 
+                  key={`calming-${index}`} 
                   className={`subcategory-button ${selectedCategories.includes(item) ? 'selected' : ''}`}
                   onClick={() => handleSubcategoryClick(item)}
                 >

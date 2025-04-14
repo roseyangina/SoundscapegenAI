@@ -17,6 +17,7 @@ export interface SoundscapeResponse {
     name: string;
     description: string;
     image_url?: string;
+    tags?: string[];
   };
 }
 
@@ -28,6 +29,7 @@ export interface SoundscapeDetails {
     name: string;
     description: string;
     image_url?: string;
+    tags?: string[];
   };
   sounds: Array<{
     preview_url: string;

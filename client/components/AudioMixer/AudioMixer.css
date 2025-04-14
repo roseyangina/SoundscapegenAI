@@ -1127,6 +1127,38 @@
   background-color: rgba(0, 0, 0, 0.2);
 }
 
+.audio-mixer-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  width: 100%;
+  text-align: center;
+}
+
+.audio-mixer-loading .spinner {
+  border: 5px solid rgba(244, 103, 31, 0.1);
+  border-radius: 50%;
+  border-top: 5px solid #F4671F;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+.audio-mixer-loading p {
+  font-size: 18px;
+  color: #555;
+  margin-top: 10px;
+  font-family: 'Poppins', sans-serif;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 
 
 

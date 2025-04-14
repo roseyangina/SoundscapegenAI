@@ -793,10 +793,11 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     }
   };
 
-  if (!isLoaded) {  // draw loading spinner until all tracks are loaded
+  if (!isLoaded) {
     return (
-      <div className="loader-container">
+      <div className="audio-mixer-loading">
         <div className="spinner"></div>
+        <p>Loading tracks: {loadedCount} of {soundUrls.length}</p>
       </div>
     );
   }

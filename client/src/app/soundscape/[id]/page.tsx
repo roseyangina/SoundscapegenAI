@@ -115,10 +115,6 @@ export default function SoundscapePage() {
           <div className="soundscape-details">
             <h1>{soundscapeDetails.soundscape.name}</h1>
             
-            {soundscapeDetails.soundscape.description && (
-              <p className="description">{soundscapeDetails.soundscape.description}</p>
-            )}
-            
             <div className="actions">
               <button 
                 className={`download-button ${downloading ? 'downloading' : ''}`}
