@@ -146,6 +146,9 @@ export async function getTrackNames(sounds: Sound[]): Promise<Sound[]> {
 } 
 
 export async function getDescription(inputString: string) {
+
+  console.log("getDescription: inputString sent =", inputString); // Added log to track
+  
   const res = await fetch(`${API_BASE_URL}/api/description`, {
     method: 'POST',
     headers: { 
