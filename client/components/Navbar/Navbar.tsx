@@ -34,7 +34,8 @@ import React, {
     useEffect(() => {
       const fetchUserStatus = async () => {
         try {
-          const response = await fetch('http://localhost:3001/api/auth/status', {
+          // use 'http://localhost:3001/api/auth/status' for local dev environment
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/status`, {
             credentials: 'include'
           });
           const data = await response.json();
@@ -57,8 +58,9 @@ import React, {
     const closeScreen = () => setScreen(null);
   
     const handleLogout = async () => {
+      // use 'http://localhost:3001/api/auth/logout' for local dev environment
       try {
-        await fetch('http://localhost:3001/api/auth/logout', {
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/logout`, {
           credentials: 'include'
         });
         setUser(false);
