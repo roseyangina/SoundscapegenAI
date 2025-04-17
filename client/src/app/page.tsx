@@ -57,7 +57,7 @@ function HomeContent() {
   async function fetchHomepageSoundscapes() {
     try {
       // Construct URL with tag filter if categories are selected
-      let url = "http://localhost:3001/api/homepage-sounds";
+      let url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/homepage-sounds` //use "http://localhost:3001/api/homepage-sounds"; for local startup in dev
       
       // Add tag filter if a category is selected (we only support single selection for server-side filtering)
       if (selectedCategories.length === 1) {
@@ -97,7 +97,8 @@ function HomeContent() {
     setIsLoading(true);
     
     try {
-      const response = await fetch("http://localhost:3001/api/keywords", {
+      // use "http://localhost:3001/api/keywords" for local dev env instead of base_url
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/keywords`, {  
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ str: inputString }),

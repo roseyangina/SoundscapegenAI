@@ -17,6 +17,7 @@ services:
     environment:
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
+      - NEXT_PUBLIC_API_BASE_URL=http://3.141.45.227:3001
 
   server:
     build:
