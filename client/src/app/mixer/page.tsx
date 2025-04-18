@@ -39,6 +39,7 @@ const Mixer = () => {
         return;
     }
 
+    // If there is a title query parameter, set the title
     if (titleParam) {
         setTitle(decodeURIComponent(titleParam));
     }
@@ -65,6 +66,7 @@ const Mixer = () => {
       }
     }
 
+    // If there is a sound ids query parameter, load the sound ids
     if (soundIdsQueryParam) {
         try {
             const parsedSoundIds = JSON.parse(decodeURIComponent(soundIdsQueryParam)); // decode and parse sound urls
@@ -105,7 +107,7 @@ const Mixer = () => {
         setSoundPans(pans);
         setTrackNames(names);
         setSoundscapeId(soundscapeId);
-    } catch (err) {
+    } catch (err) { // If there is an error, print an error message
         console.error("Error loading soundscape:", err);
         setError("Failed to load soundscape. It may not exist or has been removed.");
     } finally {

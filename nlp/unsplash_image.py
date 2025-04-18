@@ -21,10 +21,11 @@ def get_unsplash_image(query: str) -> dict:
     encoded_query = quote_plus(query)
     request_url = f"{UNSPLASH_API_URL}?query={encoded_query}&page=1&per_page=1&client_id={UNSPLASH_API_KEY}"
 
+    # Make the request to the Unsplash API
     try:
         response = requests.get(request_url)
         response.raise_for_status()
-    except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException as e: # If the request fails, print an error message
         print(f"Unsplash API error searching for '{query}': {e}")
         return {"image_url": ""}
 
@@ -35,6 +36,6 @@ def get_unsplash_image(query: str) -> dict:
         # Return the 'small' version of the image from the first result
         image_url = results[0]["urls"]["small"]
         return {"image_url": image_url}
-    else:
+    else: # If no image results are found, print an error message and return an empty string
         print(f"No image results found for query: {query}")
         return {"image_url": ""}

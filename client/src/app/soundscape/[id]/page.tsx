@@ -28,13 +28,13 @@ export default function SoundscapePage() {
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    async function fetchSoundscapeDetails() {
+    async function fetchSoundscapeDetails() { // Fetch the soundscape details from the server
       try {
         setIsLoading(true);
         console.log(`Starting to fetch soundscape with ID: ${soundscapeId}`);
         const data = await getSoundscapeById(soundscapeId);
         
-        if (data.success) {
+        if (data.success) { // If the response is successful, print a message
           console.log('Soundscape data successfully received:', data);
           setSoundscapeDetails(data);
           
@@ -50,11 +50,11 @@ export default function SoundscapePage() {
           setSoundVolumes(volumes);
           setSoundPans(pans);
           setTrackNames(names);
-        } else {
+        } else { // If the response is not successful, print an error message
           console.error("API returned success: false", data);
           setError("Failed to load soundscape: " + (data.message || "Unknown error"));
         }
-      } catch (err) {
+      } catch (err) { // If there is an error, print an error message
         console.error("Error fetching soundscape:", err);
         setError("Error loading soundscape. It may not exist or has been deleted. Details: " + (err instanceof Error ? err.message : String(err)));
       } finally {
@@ -62,18 +62,18 @@ export default function SoundscapePage() {
       }
     }
     
-    if (soundscapeId) {
+    if (soundscapeId) { // If there is a soundscape ID, fetch the soundscape details
       fetchSoundscapeDetails();
     }
   }, [soundscapeId]);
 
   //function for Dowloand feature
-  async function downloadCombinedAudio() {
+  async function downloadCombinedAudio() { // Download the combined audio from the server
     setDownloading(true);
     try {
       const res = await fetch(`http://localhost:3001/api/soundscapes/${soundscapeId}/download`);
 
-      if (!res.ok) throw new Error("Failed to generate merged combined audio");
+      if (!res.ok) throw new Error("Failed to generate merged combined audio"); // If the response is not successful, print an error message
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
@@ -84,7 +84,7 @@ export default function SoundscapePage() {
       a.click();
 
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch (err) { // If there is an error, print an error message
       console.error("Error downloading merged soundscape:", err);
       alert("Error downloading merged soundscape.");
     } finally {

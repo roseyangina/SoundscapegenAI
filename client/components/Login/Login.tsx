@@ -9,6 +9,7 @@ interface LoginProps {
 const Login: React.FC<LoginProps> = ({ setUser }) => {
   const router = useRouter();
 
+  // Handle Google login
   const handleGoogleLogin = async () => {
     try {
       // Open a popup window for Google OAuth

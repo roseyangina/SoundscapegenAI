@@ -20,6 +20,7 @@ const Category: React.FC<CategoryProps> = ({ onCategorySelect, selectedCategorie
   const [showSpace, setShowSpace] = useState<boolean>(false);
   const [showCalming, setShowCalming] = useState<boolean>(false);
 
+  // Pre-defined subcategories
   const subcategories: SubcategoryData = {
     nature: ['Nature', 'Water', 'Birds', 'Outdoors', 'Waterfall', 'Forest'],
     ambient: ['Ambient', 'Machine', 'Wind', 'Rain', 'Environment'],
@@ -27,10 +28,12 @@ const Category: React.FC<CategoryProps> = ({ onCategorySelect, selectedCategorie
     calming: ['Calming', 'Relaxing', 'Daytime', 'Peaceful']
   };
 
+  // Check if a category is selected
   const hasCategorySelected = (category: string[]): boolean => {
     return category.some(subcategory => selectedCategories.includes(subcategory));
   };
 
+  // Toggle the subcategories
   const toggleSubcategories = (category: CategoryType) => {
     if (category === 'nature') {
       setShowNature(!showNature);
@@ -43,12 +46,14 @@ const Category: React.FC<CategoryProps> = ({ onCategorySelect, selectedCategorie
     }
   };
 
+  // Handle the subcategory click
   const handleSubcategoryClick = (subcategory: string) => {
     if (onCategorySelect) {
       onCategorySelect(subcategory);
     }
   };
 
+  // Log the selected categories
   console.log("Category component - selectedCategories:", selectedCategories);
 
   return (

@@ -12,6 +12,7 @@ import { KeywordResponse, SoundscapeDetails, SoundscapeResponse } from "./types/
 import { getKeywords, downloadSound, createSoundscape, getSoundscapeById } from "./services/soundscapeService";
 import { useRouter } from "next/navigation"; // Correct for App Router
 
+// Home component, wraps the content in the AuthProvider to provide authentication context
 export default function Home() {
   return (
     <AuthProvider>
@@ -115,6 +116,7 @@ function HomeContent() {
           errorMessage = `API request failed: ${response.status} ${response.statusText}`;
         }
         
+        // Set the input error
         setInputError({
           message: errorMessage,
           suggestions: [
@@ -210,7 +212,7 @@ function HomeContent() {
     }
 
     setIsCreatingSoundscape(true);
-    try {
+    try { // Download the sounds
       const downloadedSounds = await Promise.all(
         response.sounds.map(async (sound) => {
           return await downloadSound(sound);
@@ -238,7 +240,7 @@ function HomeContent() {
     setIsLoadingSoundscape(true);
     setSoundscapeDetails(null);
 
-    try {
+    try { // Get the soundscape from the db
       const data = await getSoundscapeById(soundscapeId);
       setSoundscapeDetails(data);
     } catch (err) {

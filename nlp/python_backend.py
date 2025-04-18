@@ -5,10 +5,13 @@ from freesound import search_freesound
 from unsplash_image import get_unsplash_image
 import json
 
+# Initialize Flask application
 app = Flask(__name__)
+# Enable Cross-Origin Resource Sharing for API access from different domains
 CORS(app)
 
-# Knowledge base as a string constant
+# Knowledge base for the chatbot functionality
+# Contains information about SoundscapeGen features and capabilities
 SOUNDSCAPEGEN_KNOWLEDGE = """
 SoundscapeGen Knowledge Base
 
@@ -73,19 +76,27 @@ Best Practices:
 
 @app.route('/health', methods=['GET'])
 def health_check():
+    """Health check endpoint to verify API is running"""
     return jsonify({"status": "healthy"}), 200
 
 @app.route('/api/keywords', methods=['POST'])
 def keywords():
+    """
+    Extract keywords from user input and find matching sounds
+    
+    Expected request body: { "str": "user text description" }
+    Returns keywords and matching sounds
+    """
     data = request.get_json()
     
+    # Validate request data
     if not data or 'str' not in data:
         return jsonify(success=False, message="Missing 'str' parameter in the request."), 400
 
     input_str = data['str']
     
     try:
-        # Mistral-based function
+        # Extract keywords using Mistral-based NLP function
         keywords_result = get_keywords(input_str, min_keywords=6)
 
         # Check if the result indicates an invalid input (non-soundscape)
@@ -97,7 +108,7 @@ def keywords():
                 suggestions=keywords_result.get('suggestions', [])
             ), 200
 
-        # fallback if no keywords found
+        # Return empty response if no keywords found
         if not keywords_result:
             return jsonify(
                 success=True,
@@ -106,15 +117,15 @@ def keywords():
                 sounds=[]
             ), 200
 
-        # Fetch sounds from FreeSound by keywords extracted
+        # Fetch sounds from FreeSound API using the extracted keywords
         freesound_results = search_freesound(keywords_result)
         if not freesound_results or 'results' not in freesound_results:
             return jsonify(success=False, message="No sounds found.", keywords=keywords_result), 404
 
-        # Only top 6 sounds for the response
+        # Limit to top 6 sounds for the response
         top_sounds = freesound_results["results"][:6]
 
-        # Formatting the response
+        # Format sound data for the response
         sounds_info = []
         for index, sound in enumerate(top_sounds, start=1):
             sounds_info.append({
@@ -126,7 +137,7 @@ def keywords():
                 "freesound_id": sound.get("id")
             })
             
-        # Generate better track names using Mistral
+        # Generate more descriptive track names using Mistral
         sounds_with_better_names = generate_track_names(sounds_info)
 
         return jsonify(success=True, keywords=keywords_result, sounds=sounds_with_better_names), 200
@@ -137,8 +148,15 @@ def keywords():
 
 @app.route('/api/track-names', methods=['POST'])
 def track_names():
+    """
+    Generate better track names for the provided sounds
+    
+    Expected request body: { "sounds": [sound objects] }
+    Returns sounds with improved names
+    """
     data = request.get_json()
     
+    # Validate request data
     if not data or 'sounds' not in data:
         return jsonify(success=False, message="Missing 'sounds' parameter in the request."), 400
 
@@ -156,19 +174,25 @@ def track_names():
 
 @app.route('/api/sound/search', methods=['POST'])
 def search_sound():
+    """
+    Search for a single sound by query term
+    
+    Expected request body: { "query": "search term" }
+    Returns a single matching sound
+    """
     data = request.get_json()
     
+    # Validate request data
     if not data or 'query' not in data:
         return jsonify(success=False, message="Missing 'query' parameter in the request."), 400
 
     query = data['query']
     
     try:
-        # Extract a single keyword from the query for better results
-        # Just use the query directly as the keyword
+        # Use the query directly as a keyword
         keywords = [query]
         
-        # Fetch a single sound from FreeSound by the keyword
+        # Fetch a single sound from FreeSound API
         freesound_results = search_freesound(keywords, max_per_keyword=1)
         if not freesound_results or 'results' not in freesound_results or not freesound_results["results"]:
             return jsonify(success=False, message=f"No sound found for '{query}'."), 404
@@ -201,11 +225,19 @@ def search_sound():
     
 @app.route('/api/description', methods=['POST'])
 def get_description():
+    """
+    Generate a descriptive paragraph for a soundscape
+    
+    Expected request body: { "str": "comma-separated track names" }
+    Returns a descriptive paragraph
+    """
     try:
         data = request.get_json() or {}
+        # Validate request data
         if 'str' not in data:
             return jsonify(success=False, message="Missing 'str' parameter"), 400
 
+        # Generate description using Mistral
         desc = generate_description(data['str'])
         if not desc:
             return jsonify(success=False, message="Failed to generate description."), 500
@@ -220,11 +252,19 @@ def get_description():
 
 @app.route("/api/get-image", methods=["POST"])
 def get_image():
+    """
+    Search for an image that matches the user's input
+    
+    Expected request body: { "str": "image search term" }
+    Returns image URL and attribution information
+    """
     data = request.get_json()
+    # Validate request data
     if not data or "str" not in data:
         return jsonify(success=False, message="Missing 'str' parameter."), 400
 
     user_input = data["str"]
+    # Call Unsplash API to get an image matching the input
     result = get_unsplash_image(user_input)
     if result.get("image_url"):
         return jsonify(success=True, **result), 200
@@ -233,14 +273,21 @@ def get_image():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
+    """
+    Chat endpoint that uses Mistral to answer user questions
+    
+    Expected request body: { "message": "user question" }
+    Returns an AI-generated response about SoundscapeGen
+    """
     try:
         data = request.get_json()
+        # Validate request data
         if not data or 'message' not in data:
             return jsonify(success=False, message="Missing 'message' parameter"), 400
 
         user_message = data['message']
         
-        # Create a prompt for Mistral
+        # Create a prompt for Mistral with knowledge base context
         prompt = f"""
         You are a helpful assistant for SoundscapeGen, a soundscape creation platform. 
         Use the following knowledge base to answer the user's question. If the answer 
@@ -261,13 +308,13 @@ def chat():
         Return your response in a JSON format with a single field 'response'.
         """
 
-        # Call Mistral
+        # Call Mistral API to generate a response
         response = mistral_client.chat.complete(
             model=MODEL_NAME,
             messages=[{"role": "user", "content": prompt}],
         )
 
-        # Extract the response
+        # Extract the response text
         raw_text = response.choices[0].message.content.strip()
         
         # Clean up response if wrapped in code blocks
@@ -285,12 +332,13 @@ def chat():
             return jsonify(success=True, response=data["response"]), 200
 
         except json.JSONDecodeError as e:
-            # If parsing fails, return the raw text as the response
+            # Fallback: if parsing fails, return the raw text as the response
             return jsonify(success=True, response=raw_text), 200
 
     except Exception as e:
         print(f"Error in chat endpoint: {str(e)}")
         return jsonify(success=False, message=str(e)), 500
 
+# Run the Flask application when this script is executed directly
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3002)

@@ -49,6 +49,7 @@ passport.serializeUser((user, done) => {
   done(null, user.user_id);
 });
 
+// Deserialize the user from the database
 passport.deserializeUser(async (id, done) => {
   try {
     const db = require('./db/config');
@@ -102,6 +103,7 @@ passport.use(new GoogleStrategy({
   }
 ));
 
+// Wait for the Python service to be ready before starting the server
 async function waitForPythonService(maxAttempts = 10) {
     for (let i = 0; i < maxAttempts; i++) {
         try {
@@ -121,12 +123,13 @@ async function waitForPythonService(maxAttempts = 10) {
     return false;
 }
 
+// This endpoint is used to get the keywords for the soundscape
 app.post('/api/keywords', async (req, res) => {
     console.log("Receiving POST request to /keywords endpoint")
     const { str } = req.body 
     console.log(req.body)
 
-    try {
+    try { // If there is an error, print an error message
         if (!redisClient.isReady) {
             console.error("Redis client not ready");
             return res.status(500).json({
@@ -138,7 +141,7 @@ app.post('/api/keywords', async (req, res) => {
         console.log("Checking Redis cache for:", `keywords:${str}`);
         const cachedResult = await redisClient.get(`keywords:${str}`);
         
-        if (cachedResult){
+        if (cachedResult){ // If the result is in the cache, return the result
             console.log("Cache HIT - Returning cached result");
             return res.status(200).json(JSON.parse(cachedResult));
         }
@@ -147,7 +150,7 @@ app.post('/api/keywords', async (req, res) => {
         // Attempt up to 3 times
         let retries = 3;
         let response;
-        while (retries > 0) {
+        while (retries > 0) { // If the result is not in the cache, attempt to fetch from the Python service
             try {
                 response = await fetch("http://soundscape-python:3002/api/keywords", {
                     method: "POST",
@@ -181,10 +184,10 @@ app.post('/api/keywords', async (req, res) => {
             });
         }
 
-        if (response.ok) {
-            if (!jsonResponse.success) {
+        if (response.ok) { // If the response is successful
+            if (!jsonResponse.success) { // If the response is not successful, print an error message
                 console.log("Error in python response, success=false");
-                return res.status(400).json({
+                return res.status(400).json({ // Return a JSON with success = false, message = ...
                     success: false,
                     message: jsonResponse.message || "Unable to process your soundscape request.",
                     is_valid_input: jsonResponse.is_valid_input || false,
@@ -210,17 +213,17 @@ app.post('/api/keywords', async (req, res) => {
             console.log("got keywords:");
             console.log(jsonResponse);
             
-            if (jsonResponse && jsonResponse.success) {
+            if (jsonResponse && jsonResponse.success) { // If the response is successful, cache the result
                 await redisClient.set(`keywords:${str}`, JSON.stringify(jsonResponse));
             }
             
-            return res.status(200).json(jsonResponse);
+            return res.status(200).json(jsonResponse); // Return the result
         } else {
             // Non-OK response
             console.log("Python service returned non-OK response:", response.status);
             
             // Use the error message from the Python service if available
-            return res.status(400).json({
+            return res.status(400).json({ // Return a JSON with success = false, message = ...
                 success: false,
                 message: jsonResponse?.message || "Failed to process your soundscape request.",
                 suggestions: [
@@ -232,9 +235,9 @@ app.post('/api/keywords', async (req, res) => {
                 ]
             });
         }
-    } catch (error) {
+    } catch (error) { // If there is an error, print an error message
         console.log("Error: ", error);
-        return res.status(500).json({
+        return res.status(500).json({ // Return a JSON with success = false, message = ...
             success: false, 
             message: "Server error processing the soundscape request. Please try again later.",
             suggestions: [
@@ -254,7 +257,7 @@ app.post('/api/track-names', async (req, res) => {
     const { sounds } = req.body;
     console.log(`Request to generate names for ${sounds.length} sounds`);
 
-    try {
+    try { // If there is an error, print an error message
         if (!redisClient.isReady) {
             console.error("Redis client not ready");
             return res.status(500).json({
@@ -303,7 +306,7 @@ app.post('/api/track-names', async (req, res) => {
         let jsonResponse;
         try {
             jsonResponse = await response.json();
-        } catch (error) {
+        } catch (error) { // If there is an error, print an error message
             console.error("Failed to parse Python service response:", error);
             return res.status(500).json({
                 success: false,
@@ -319,7 +322,7 @@ app.post('/api/track-names', async (req, res) => {
             }
             
             return res.status(200).json(jsonResponse);
-        } else {
+        } else { // If the response is not successful, print an error message
             console.error("Python service returned error:", jsonResponse);
             return res.status(response.status || 500).json({
                 success: false,
@@ -352,7 +355,7 @@ app.post('/api/sounds/download', async (req, res) => {
         // Check if the sound already exists in the database
         const existingSound = await freesoundService.getSoundByFreesoundId(freesoundId, sourceUrl);
         
-        if (existingSound) {
+        if (existingSound) { // If the sound already exists in the database, return the sound
             console.log("Sound already exists in database:", existingSound);
             
             // Return the existing sound immediately
@@ -374,12 +377,12 @@ app.post('/api/sounds/download', async (req, res) => {
         );
         
         console.log("Sound downloaded and saved successfully:", sound);
-        return res.status(201).json({ 
+        return res.status(201).json({ // Return a JSON with success = true, message = ...
             success: true, 
             message: 'Sound downloaded and saved successfully',
             sound
         });
-    } catch (error) {
+    } catch (error) { // If there is an error, print an error message
         console.error('Error downloading sound:', error);
         return res.status(500).json({ 
             success: false, 
@@ -436,7 +439,7 @@ app.post('/api/sounds/search', async (req, res) => {
             success: true,
             sound: soundResponse
         });
-    } catch (error) {
+    } catch (error) { // If there is an error, print an error message
         console.error('Error searching for sound:', error);
         return res.status(500).json({
             success: false,
@@ -447,7 +450,7 @@ app.post('/api/sounds/search', async (req, res) => {
 
 // Retrieve all sounds from the database
 app.get('/api/sounds', async (req, res) => {
-    try {
+    try { // If there is an error, print an error message
         const db = require('./db/config');
         const result = await db.query('SELECT * FROM "Sound" ORDER BY created_at DESC');
         
@@ -455,7 +458,7 @@ app.get('/api/sounds', async (req, res) => {
             success: true, 
             sounds: result.rows 
         });
-    } catch (error) {
+    } catch (error) { // If there is an error, print an error message
         console.error('Error getting sounds:', error);
         return res.status(500).json({ 
             success: false, 
@@ -468,7 +471,7 @@ app.get('/api/sounds', async (req, res) => {
 app.post('/api/soundscapes', async (req, res) => {
     const { name, description, user_id, sound_ids } = req.body;
     
-    if (!name || !sound_ids || !Array.isArray(sound_ids)) {
+    if (!name || !sound_ids || !Array.isArray(sound_ids)) { // If the name or sound_ids are not provided, print an error message
         return res.status(400).json({
             success: false,
             message: 'Missing required parameters: name and sound_ids array are required'
@@ -477,7 +480,7 @@ app.post('/api/soundscapes', async (req, res) => {
     
     const db = require('./db/config');
     
-    try {
+    try { // If there is an error, print an error message
         await db.query('BEGIN');
         
         // Check if the soundscape exists with the same name/description
@@ -487,7 +490,7 @@ app.post('/api/soundscapes', async (req, res) => {
             [name, description || '']
         );
         
-        if (existingResult.rows.length > 0) {
+        if (existingResult.rows.length > 0) { // If the soundscape exists, use it
             // Soundscape exists, use it
             soundscape = existingResult.rows[0];
             
@@ -496,7 +499,7 @@ app.post('/api/soundscapes', async (req, res) => {
                 'DELETE FROM "SoundscapeSound" WHERE soundscape_id = $1',
                 [soundscape.soundscape_id]
             );
-        } else {
+        } else { // If the soundscape does not exist, create a new soundscape
             // Create a new soundscape, ensuring we don't conflict with existing IDs
             try {
                 const soundscapeResult = await db.query(
@@ -504,7 +507,7 @@ app.post('/api/soundscapes', async (req, res) => {
                     [name, description || '', user_id || null]
                 );
                 soundscape = soundscapeResult.rows[0];
-            } catch (insertError) {
+            } catch (insertError) { // If there is an error, print an error message
                 if (insertError.code === '23505' && insertError.constraint === 'Soundscape_pkey') {
                     // Primary key violation - try to get a valid ID by checking the sequence
                     const seqResult = await db.query('SELECT last_value FROM "Soundscape_soundscape_id_seq"');
@@ -526,8 +529,7 @@ app.post('/api/soundscapes', async (req, res) => {
                         [name, description || '', user_id || null]
                     );
                     soundscape = soundscapeResult.rows[0];
-                } else {
-                    // Different error, rethrow
+                } else { // If there is an error, print an error message
                     throw insertError;
                 }
             }
@@ -535,9 +537,9 @@ app.post('/api/soundscapes', async (req, res) => {
         
         // Filter out duplicate sound_ids
         const uniqueSounds = {};
-        for (const soundItem of sound_ids) {
+        for (const soundItem of sound_ids) { // For each sound in the sound_ids array
             const { sound_id, volume = 1.0, pan = 0.0 } = soundItem;
-            if (!uniqueSounds[sound_id]) {
+            if (!uniqueSounds[sound_id]) { // If the sound_id is not in the uniqueSounds object, add it
                 uniqueSounds[sound_id] = { sound_id, volume, pan };
             }
         }
@@ -560,7 +562,7 @@ app.post('/api/soundscapes', async (req, res) => {
             soundscape,
             isUpdate: existingResult?.rows.length > 0
         });
-    } catch (error) {
+    } catch (error) { // If there is an error, print an error message
         await db.query('ROLLBACK');
         console.error('Error creating soundscape:', error);
         return res.status(500).json({
@@ -576,7 +578,7 @@ app.get('/api/soundscapes/:id', async (req, res) => {
     const soundscapeId = req.params.id;
     const redisKey = `soundscape:${soundscapeId}`;
     
-    if (!soundscapeId) {
+    if (!soundscapeId) { // If the soundscapeId is not provided, print an error message
         return res.status(400).json({
             success: false,
             message: 'Soundscape ID is required'
@@ -585,8 +587,8 @@ app.get('/api/soundscapes/:id', async (req, res) => {
     
     const db = require('./db/config');
     
-    try {
-        const result = await cacheFetch(redisKey, async () => {
+    try { // If there is an error, print an error message
+        const result = await cacheFetch(redisKey, async () => { 
             
             const soundscapeResult = await db.query( // retrieve soundscape from db
                 'SELECT * FROM "Soundscape" WHERE soundscape_id = $1',
@@ -597,7 +599,7 @@ app.get('/api/soundscapes/:id', async (req, res) => {
                 throw new Error ('Soundscape not found')
             }
             
-            const soundscape = soundscapeResult.rows[0];
+            const soundscape = soundscapeResult.rows[0]; // retrieve soundscape from db
             
             const soundsResult = await db.query( // retrieve each sound in the soundscape
                 `SELECT s.*, ss.volume, ss.pan 
@@ -616,7 +618,7 @@ app.get('/api/soundscapes/:id', async (req, res) => {
 
         res.status(200).json(result);
 
-    } catch (error) {
+    } catch (error) { // If there is an error, print an error message
         console.error('Error getting soundscape:', error);
         return res.status(500).json({
             success: false,
@@ -629,8 +631,8 @@ app.get('/api/soundscapes/:id', async (req, res) => {
 app.post('/api/soundscapes/:id/sounds', async (req, res) => {
     const soundscapeId = req.params.id;
     const { sound } = req.body;
-    
-    if (!sound || !sound.sound_id) {
+     
+    if (!sound || !sound.sound_id) { // If the sound or sound_id is not provided, print an error message
         return res.status(400).json({
             success: false,
             message: 'Sound ID is required'
@@ -639,7 +641,7 @@ app.post('/api/soundscapes/:id/sounds', async (req, res) => {
     
     const db = require('./db/config');
     
-    try {
+    try { // If there is an error, print an error message
         await db.query('BEGIN');
         
         // Check if the soundscape exists
@@ -648,7 +650,7 @@ app.post('/api/soundscapes/:id/sounds', async (req, res) => {
             [soundscapeId]
         );
         
-        if (soundscapeResult.rows.length === 0) {
+        if (soundscapeResult.rows.length === 0) { // If the soundscape does not exist, print an error message
             await db.query('ROLLBACK');
             return res.status(404).json({
                 success: false,
@@ -714,7 +716,7 @@ app.post('/api/soundscapes/:id/sounds', async (req, res) => {
             [soundscapeId]
         );
         
-        const soundsData = await db.query(
+        const soundsData = await db.query( // retrieve each sound in the soundscape
             `SELECT s.*, ss.volume, ss.pan 
             FROM "Sound" s
             JOIN "SoundscapeSound" ss ON s.sound_id = ss.sound_id
@@ -722,13 +724,13 @@ app.post('/api/soundscapes/:id/sounds', async (req, res) => {
             [soundscapeId]
         );
         
-        return res.status(200).json({
+        return res.status(200).json({ // Return a JSON with success = true, message = ...
             success: true,
             message: 'Sound added to soundscape successfully',
             soundscape: soundscapeData.rows[0],
             sounds: soundsData.rows
         });
-    } catch (error) {
+    } catch (error) { // If there is an error, print an error message
         await db.query('ROLLBACK');
         console.error('Error adding sound to soundscape:', error);
         return res.status(500).json({
@@ -741,18 +743,18 @@ app.post('/api/soundscapes/:id/sounds', async (req, res) => {
 // To download tracks and finalized as one mp3
 app.get('/api/soundscapes/:id/download', async (req, res) => {
 
-    const soundscapeId = req.params.id;
+    const soundscapeId = req.params.id; // get the soundscapeId from the request
     // check if hit
     console.log(`Download route; Hit with soundscape ID: ${soundscapeId}`)
 
-    if (!soundscapeId) {
+    if (!soundscapeId) { // If the soundscapeId is not provided, print an error message
       return res.status(400).json({ success: false, message: 'Soundscape ID is required' });
     }
   
     const db = require('./db/config');
   
-    try {
-      const soundsResult = await db.query(
+    try { // If there is an error, print an error message
+      const soundsResult = await db.query( // retrieve each sound in the soundscape
         `SELECT s.file_path, s.name, ss.volume, ss.pan
          FROM "Sound" s
          JOIN "SoundscapeSound" ss ON s.sound_id = ss.sound_id
@@ -761,13 +763,13 @@ app.get('/api/soundscapes/:id/download', async (req, res) => {
       );
   
       const rows = soundsResult.rows;
-      if (rows.length === 0) {
+      if (rows.length === 0) { // If there are no sounds found for this soundscape, print an error message
         return res.status(404).json({ success: false, message: "No sounds found for this soundscape." });
       }
       
       console.warn("No sounds found for this soundscape, skipping FFmpeg.");
 
-      const files = rows.map(r => {
+      const files = rows.map(r => { 
         // Using preview_url (since it's a local copy), fallback to file_path
         const relativePath = (r.preview_url || r.file_path || '').replace(/^\/?/, '');
         return path.join(__dirname, 'public', relativePath);
@@ -777,7 +779,7 @@ app.get('/api/soundscapes/:id/download', async (req, res) => {
       const existingRows = rows.filter((_, i) => fs.existsSync(files[i]));
       const existingFiles = files.filter(fs.existsSync);
 
-      if (existingFiles.length === 0) {
+      if (existingFiles.length === 0) { // If there are no valid sounds found for merging, print an error message
         return res.status(404).json({ success: false, message: "No valid sounds found for merging" });
       }
 
@@ -836,16 +838,16 @@ app.get('/api/soundscapes/:id/download', async (req, res) => {
        .complexFilter(fullFilter, 'out')
        .audioCodec('libmp3lame')
        .output(outputPath)    
-       .on('start', cmd => {
+       .on('start', cmd => { // When the merge starts, print the command
            console.log("FFmpeg command:", cmd);
         })
-       .on('error', err => {
+       .on('error', err => { // If there is an error, print an error message
             console.error('FFmpeg error:', err.message);
             if (!res.headersSent) {
               return res.status(500).json({ success: false, message: "Error mixing audio." });
             }
         })
-       .on('end', () => {
+       .on('end', () => { // When the merge is finished, download the output path
            console.log('Merge finished');
            res.download(outputPath, `soundscape_${soundscapeId}.mp3`, err => {
              if (err) console.error('Send error:', err);
@@ -856,7 +858,7 @@ app.get('/api/soundscapes/:id/download', async (req, res) => {
       console.log("Running FFmpeg");
       command.run();
 
-    } catch (error) {
+    } catch (error) { // If there is an error, print an error message
       console.error('Download error:', error);
       res.status(500).json({ success: false, message: 'Error generating soundscape: ' + error.message });
     }
@@ -868,21 +870,21 @@ app.get('/api/auth/google',
     console.log('Starting Google OAuth flow');
     next();
   },
-  passport.authenticate('google', { 
+  passport.authenticate('google', {  // Authenticate the user with Google
     scope: ['profile', 'email'],
     failureRedirect: 'http://localhost:3000/login?error=auth_failed'
   })
 );
 
-app.get('/api/auth/google/callback', 
+app.get('/api/auth/google/callback',  // Callback for Google OAuth, allows user to login with Google
   (req, res, next) => {
     console.log('Received Google OAuth callback');
     next();
   },
-  passport.authenticate('google', { 
+  passport.authenticate('google', {  // Authenticate the user with Google
     failureRedirect: 'http://localhost:3000/login?error=auth_failed' 
   }),
-  (req, res) => {
+  (req, res) => { // Send token and user data to the client via postMessage
     try {
       console.log('Google authentication successful');
       const token = authService.generateToken(req.user);
@@ -909,7 +911,7 @@ app.get('/api/auth/google/callback',
           </body>
         </html>
       `);
-    } catch (error) {
+    } catch (error) { // If there is an error, print an error message
       console.error('Error in Google callback:', error);
       res.redirect('http://localhost:3000/login?error=server_error');
     }
@@ -1014,7 +1016,7 @@ app.get('/api/homepage-sounds', async (req, res) => {
         `, [`%${tagFilter}%`, tagFilter]);
         
         console.log(`[Homepage] Found ${soundscapesResult.rowCount} soundscapes matching tag: ${tagFilter}`);
-      } else {
+      } else { // If there is no tag filter, retrieve all preset soundscapes
         soundscapesResult = await db.query(`
           SELECT * FROM "Soundscape" 
           WHERE is_preset = true 
@@ -1094,8 +1096,8 @@ app.post('/api/description', async (req, res) => {
         body: JSON.stringify({ str })
       });
   
-      const jsonResponse = await pythonRes.json();
-      if (!pythonRes.ok || !jsonResponse.success) {
+      const jsonResponse = await pythonRes.json(); // Parse the response as JSON
+      if (!pythonRes.ok || !jsonResponse.success) { // If the response is not successful, print an error message
         return res.status(400).json({
           success: false,
           message: jsonResponse.message || "Failed to generate description."
@@ -1115,8 +1117,8 @@ app.post('/api/description', async (req, res) => {
 // Updated: Add url image end point
 app.post('/api/get-image', async (req, res) => {
 
-    const { str } = req.body;
-    if (!str) {
+    const { str } = req.body; // Get the str from the request
+    if (!str) { // If the str is not provided, print an error message
       return res.status(400).json({
         success: false,
         message: "Missing 'str' parameter in the request."
@@ -1133,7 +1135,7 @@ app.post('/api/get-image', async (req, res) => {
       const data = await response.json();
       console.log("Response from Python service:", data);
   
-      if (!response.ok || !data.success) {
+      if (!response.ok || !data.success) { // If the response is not successful, print an error message
         return res.status(400).json({
           success: false,
           message: data.message || "Failed to generate image URL."
@@ -1141,7 +1143,7 @@ app.post('/api/get-image', async (req, res) => {
       }
       
       return res.status(200).json(data);
-    } catch (error) {
+    } catch (error) { // If there is an error, print an error message
       return res.status(500).json({
         success: false,
         message: "Internal server error while generating image."
@@ -1153,14 +1155,14 @@ app.post('/api/get-image', async (req, res) => {
 app.post('/api/chat', async (req, res) => {
   const { message } = req.body;
   
-  if (!message) {
+  if (!message) { // If the message is not provided, print an error message
     return res.status(400).json({
       success: false,
       message: 'Message is required'
     });
   }
 
-  try {
+  try { // If there is an error, print an error message
     console.log('Forwarding chat request to Python service...');
     // Forward the request to the Python service
     const response = await fetch("http://soundscape-python:3002/api/chat", {
@@ -1203,7 +1205,7 @@ async function fixSoundSequence() {
     
     console.log(`[Database] Sound: Current sequence value: ${currentSoundSeqValue}, Maximum ID: ${maxSoundId}`);
     
-    if (currentSoundSeqValue <= maxSoundId) {
+    if (currentSoundSeqValue <= maxSoundId) { // If the current sequence value is less than the maximum ID, print a message
       console.log('[Database] Fixing Sound_sound_id_seq...');
       await db.query(`SELECT setval('"Sound_sound_id_seq"', ${maxSoundId}, true)`);
       console.log(`[Database] Sound sequence has been reset to ${maxSoundId}`);

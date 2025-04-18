@@ -16,14 +16,17 @@ const Chatbot = () => {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Scroll to the bottom of the messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Use effect to scroll to the bottom of the messages
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  // Handle submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
@@ -49,7 +52,7 @@ const Chatbot = () => {
       const botMessage: Message = { text: data.response, sender: 'bot' };
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', error); // If there is an error, print an error message
       const errorMessage: Message = { 
         text: "Sorry, I'm having trouble connecting. Please try again later.", 
         sender: 'bot' 

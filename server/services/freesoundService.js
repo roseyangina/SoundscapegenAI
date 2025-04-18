@@ -116,12 +116,12 @@ async function downloadAndSaveSound(freesoundId, sourceUrl, name, description, p
         resolve(result.rows[0]);
       } catch (error) {
         console.error(`Error after download: ${error.message}`);
-        try {
+        try { // If there is an error, delete the file
           if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
             console.log(`Deleted file ${filePath} due to error`);
           }
-        } catch (unlinkError) {
+        } catch (unlinkError) { // If there is an error deleting the file, print an error message
           console.error(`Error deleting file: ${unlinkError.message}`);
         }
         reject(error);
@@ -132,23 +132,23 @@ async function downloadAndSaveSound(freesoundId, sourceUrl, name, description, p
 
 // Get sound details from Freesound API using Node's HTTPS module.
 async function getSoundDetails(freesoundId) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => { // Return a promise to get the sound details
     const url = `https://freesound.org/apiv2/sounds/${freesoundId}/?token=${FREESOUND_API_KEY}`;
     const protocol = url.startsWith('https') ? https : http;
-    protocol.get(url, (response) => {
+    protocol.get(url, (response) => { // Get the sound details from the Freesound API
       let data = '';
-      response.on('data', (chunk) => {
+      response.on('data', (chunk) => { // Add the data to the data variable
         data += chunk;
       });
-      response.on('end', () => {
+      response.on('end', () => { // When the response is finished, parse the data
         try {
           const json = JSON.parse(data);
           resolve(json);
-        } catch (error) {
+        } catch (error) { // If there is an error, reject the promise
           reject(error);
         }
       });
-    }).on('error', (err) => {
+    }).on('error', (err) => { // If there is an error, reject the promise
       reject(err);
     });
   });
@@ -169,17 +169,17 @@ async function searchFreesound(query, maxResults = 1, options = {}) {
     
     const url = `https://freesound.org/apiv2/search/text/?${params.toString()}`;
     
-    https.get(url, (response) => {
+    https.get(url, (response) => { // Get the sound details from the Freesound API
       let data = '';
-      response.on('data', (chunk) => {
+      response.on('data', (chunk) => { // Add the data to the data variable
         data += chunk;
       });
       
-      response.on('end', () => {
+      response.on('end', () => { // When the response is finished, parse the data
         try {
           const result = JSON.parse(data);
           
-          if (!result.results || result.results.length === 0) {
+          if (!result.results || result.results.length === 0) { // If there are no results, resolve the promise
             resolve({ results: [] });
             return;
           }
@@ -200,11 +200,11 @@ async function searchFreesound(query, maxResults = 1, options = {}) {
           });
           
           resolve({ results: processedResults });
-        } catch (error) {
+        } catch (error) { // If there is an error, reject the promise
           reject(error);
         }
       });
-    }).on('error', (err) => {
+    }).on('error', (err) => { // If there is an error, reject the promise
       reject(err);
     });
   });
@@ -228,12 +228,12 @@ async function getSoundByFreesoundId(freesoundId, sourceUrl) {
         'SELECT * FROM "Sound" WHERE freesound_id = $1',
         [freesoundId]
       );
-      return result.rows.length > 0 ? result.rows[0] : null;
+      return result.rows.length > 0 ? result.rows[0] : null; // If there is a result, return the first row
     }
     
-    return null;
+    return null; // If there is no result, return null
   } catch (error) {
-    console.error('Error checking if sound exists:', error);
+    console.error('Error checking if sound exists:', error); // If there is an error, print an error message
     throw error;
   }
 }
