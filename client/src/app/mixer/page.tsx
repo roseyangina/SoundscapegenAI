@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = 'force-dynamic'; //linting
-
 import Navbar from "../../../components/Navbar/Navbar";
 import AudioMixer from "../../../components/AudioMixer/AudioMixer";
 import "./mixer.css"; 
