@@ -35,7 +35,7 @@ import React, {
       const fetchUserStatus = async () => {
         try {
           // use 'http://localhost:3001/api/auth/status' for local dev environment
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user/status`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/status`, {
             credentials: 'include'
           });
           const data = await response.json();

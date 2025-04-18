@@ -13,11 +13,11 @@ services:
       - python_nlp
     volumes:
       - ./client:/app
-      - /app/.next
+      - /app/.next #- /app/node_modules
     environment:
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
-      - NEXT_PUBLIC_API_BASE_URL=http://3.141.45.227:3001
+      - NEXT_PUBLIC_API_BASE_URL=http://3.128.207.110:3001
 
   server:
     build:
