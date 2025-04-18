@@ -18,7 +18,8 @@ const Login: React.FC<LoginProps> = ({ setUser }) => {
       const top = window.screenY + (window.outerHeight - height) / 2;
       
       const popup = window.open(
-        'http://localhost:3001/api/auth/google',
+        // use 'http://localhost:3001/api/auth/google' for local dev environment
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/google`,
         'Google Login',
         `width=${width},height=${height},left=${left},top=${top}`
       );
@@ -29,7 +30,8 @@ const Login: React.FC<LoginProps> = ({ setUser }) => {
       }
 
       const messageHandler = (event: MessageEvent) => {
-        if (event.origin !== 'http://localhost:3001') return;
+        // use 'http://localhost:3001' for local dev environment
+        if (event.origin !== `${process.env.NEXT_PUBLIC_API_BASE_URL}`) return;
         
         if (event.data.token && event.data.user) {
           localStorage.setItem('token', event.data.token);

@@ -739,7 +739,8 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       // Either way, add the sound to the UI
       // Create a new Tone.Player
       const newPlayer = new Tone.Player({
-        url: downloadResult.sound.file_path ? `http://localhost:3001${downloadResult.sound.file_path}` : (searchedSound.preview_url || ''),
+        // use `http://localhost:3001${downloadResult.sound.file_path}` for local dev env
+        url: downloadResult.sound.file_path ? `${process.env.NEXT_PUBLIC_API_BASE_URL}${downloadResult.sound.file_path}` : (searchedSound.preview_url || ''),
         loop: true,
         autostart: false,
         onload: () => {
@@ -761,7 +762,8 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       // Add to the tracklist
       const newTrack: AudioTrack = {
         id: tracks.length,
-        url: downloadResult.sound.file_path ? `http://localhost:3001${downloadResult.sound.file_path}` : (searchedSound.preview_url || ''),
+        // use `http://localhost:3001${downloadResult.sound.file_path}` for local dev environment
+        url: downloadResult.sound.file_path ? `${process.env.NEXT_PUBLIC_API_BASE_URL}${downloadResult.sound.file_path}` : (searchedSound.preview_url || ''),
         player: newPlayer,
         panner: newPanner,
         volume: newVolume,

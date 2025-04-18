@@ -10,8 +10,9 @@ export const AuthProvider = ({ children }) => {
   // Check authentication status when the app loads
   useEffect(() => {
     const checkAuthStatus = async () => {
+      // use 'http://localhost:3001/api/auth/status' for local dev environment
       try {
-        const response = await fetch('http://localhost:3001/api/auth/status', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/status`, {
           credentials: 'include' // Important for cookies to be sent
         });
         const data = await response.json();
@@ -30,8 +31,9 @@ export const AuthProvider = ({ children }) => {
 
   // Function to handle logout
   const logout = async () => {
+    // use 'http://localhost:3001/api/auth/logout' in local dev environment
     try {
-      await fetch('http://localhost:3001/api/auth/logout', {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/status`, {
         credentials: 'include'
       });
       setIsAuthenticated(false);
