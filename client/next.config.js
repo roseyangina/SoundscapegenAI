@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-    experimental: {
-        missingSuspenseWithCSRBailout: false,
-      },    
+const nextConfig = {    
     typescript: {
       ignoreBuildErrors: true, //  This skips TypeScript errors during build
     },

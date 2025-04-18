@@ -5,6 +5,7 @@ import AudioMixer from "../../../components/AudioMixer/AudioMixer";
 import "./mixer.css"; 
 
 import { useSearchParams } from "next/navigation";
+import { Suspense } from 'react';
 import { useEffect, useState } from "react";
 import { getSoundscapeById } from "../services/soundscapeService";
 import Link from "next/link";
@@ -116,50 +117,52 @@ const Mixer = () => {
 
 
   return (
-    <div>
-      <Navbar user={user} setUser={setUser} />
+    <Suspense fallback={<div>Loading mixer...</div>}>
+      <div>
+        <Navbar user={user} setUser={setUser} />
 
-      <div className="mixer-container">
-        {isLoading ? (
-            <div className="loading-container">
-                <div className="spinner"></div>
-                <p>Loading soundscape...</p>
-            </div>
-        ) : error ? (
-            <div className="error-container">
-                <h2>Error</h2>
-                <p>{error}</p>
-                <Link href="/" className="back-button">
-                    Back to home
-                </Link>
-            </div>
-        ) : sounds.length > 0 ? (
-            <div className="audio-mixer-container">
-                {sounds.length > 0 ? (
-                    <AudioMixer
-                        soundUrls={sounds}
-                        soundIds={soundIds}
-                        initialVolumes={soundVolumes}
-                        initialPans={soundPans}
-                        title={title}
-                        trackNames={trackNames}
-                        soundscapeId={soundscapeId || undefined}
-                    />
-                ) : (
-                    <p>Loading sounds...</p>
-                )}    
-            </div>
-        ) : (
-            <div className="no-sound-message">
-                <p>No sound selected. Please go back and select some sounds to mix</p>
-                <Link href="/" className="back-button">
-                    Back to Home
-                </Link>
-            </div>
-        )}
+        <div className="mixer-container">
+          {isLoading ? (
+              <div className="loading-container">
+                  <div className="spinner"></div>
+                  <p>Loading soundscape...</p>
+              </div>
+          ) : error ? (
+              <div className="error-container">
+                  <h2>Error</h2>
+                  <p>{error}</p>
+                  <Link href="/" className="back-button">
+                      Back to home
+                  </Link>
+              </div>
+          ) : sounds.length > 0 ? (
+              <div className="audio-mixer-container">
+                  {sounds.length > 0 ? (
+                      <AudioMixer
+                          soundUrls={sounds}
+                          soundIds={soundIds}
+                          initialVolumes={soundVolumes}
+                          initialPans={soundPans}
+                          title={title}
+                          trackNames={trackNames}
+                          soundscapeId={soundscapeId || undefined}
+                      />
+                  ) : (
+                      <p>Loading sounds...</p>
+                  )}    
+              </div>
+          ) : (
+              <div className="no-sound-message">
+                  <p>No sound selected. Please go back and select some sounds to mix</p>
+                  <Link href="/" className="back-button">
+                      Back to Home
+                  </Link>
+              </div>
+          )}
+        </div>
+        <About />
       </div>
-      <About />
-    </div>
+    </Suspense>
   );
 };
 
