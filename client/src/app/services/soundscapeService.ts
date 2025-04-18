@@ -1,6 +1,6 @@
 import { KeywordResponse, Sound, SoundscapeDetails, SoundscapeResponse } from '../types/soundscape';
-
-const API_BASE_URL = 'http://localhost:3001';
+// use 'http://localhost:3001' with quotes in place of process.env.NEXT_PUBLIC_API_BASE_URL in local dev
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function getKeywords(inputString: string): Promise<KeywordResponse> {
   const res = await fetch(`${API_BASE_URL}/api/keywords`, {

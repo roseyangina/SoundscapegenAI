@@ -97,7 +97,7 @@ function HomeContent() {
     setIsLoading(true);
     
     try {
-      // use "http://localhost:3001/api/keywords" for local dev env instead of base_url
+      // use "http://localhost:3001/api/keywords" for local dev env instead of `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/keywords`
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/keywords`, {  
         method: "POST",
         headers: { "Content-Type": "application/json" },
