@@ -165,6 +165,116 @@ exports.seed = async function(knex) {
       name: 'Leaves Rustling Quickly',
       description: 'Sound from https://cdn.freesound.org/previews/489/489937_10570192-hq.mp3',
       preview_url: 'https://cdn.freesound.org/previews/489/489937_10570192-hq.mp3'
+    },
+    // Rainy Forest Walk Sounds
+    {
+      sound_id: 19,
+      source_url: 'https://cdn.freesound.org/previews/387/387950_1738686-hq.mp3',
+      freesound_id: 0,
+      file_path: '/sounds/0_1744998591360.mp3',
+      name: 'Subtle Distant Thunder',
+      description: 'Sound from https://cdn.freesound.org/previews/387/387950_1738686-hq.mp3',
+      preview_url: 'https://cdn.freesound.org/previews/387/387950_1738686-hq.mp3'
+    },
+    {
+      sound_id: 20,
+      source_url: 'https://cdn.freesound.org/previews/660/660258_11673893-hq.mp3',
+      freesound_id: 0,
+      file_path: '/sounds/0_1744998591369.mp3',
+      name: 'Autumn Leaves Footsteps',
+      description: 'Sound from https://cdn.freesound.org/previews/660/660258_11673893-hq.mp3',
+      preview_url: 'https://cdn.freesound.org/previews/660/660258_11673893-hq.mp3'
+    },
+    {
+      sound_id: 21,
+      source_url: 'https://cdn.freesound.org/previews/145/145395_2607024-hq.mp3',
+      freesound_id: 0,
+      file_path: '/sounds/0_1744998591349.mp3',
+      name: 'Distant Rain Thunder',
+      description: 'Sound from https://cdn.freesound.org/previews/145/145395_2607024-hq.mp3',
+      preview_url: 'https://cdn.freesound.org/previews/145/145395_2607024-hq.mp3'
+    },
+    {
+      sound_id: 22,
+      source_url: 'https://cdn.freesound.org/previews/758/758785_2061858-hq.mp3',
+      freesound_id: 0,
+      file_path: '/sounds/0_1744998591354.mp3',
+      name: 'Autumn Leaves Footsteps',
+      description: 'Sound from https://cdn.freesound.org/previews/758/758785_2061858-hq.mp3',
+      preview_url: 'https://cdn.freesound.org/previews/758/758785_2061858-hq.mp3'
+    },
+    {
+      sound_id: 23,
+      source_url: 'https://cdn.freesound.org/previews/758/758785_2061858-hq.mp3',
+      freesound_id: 0,
+      file_path: '/sounds/0_1744998591374.mp3',
+      name: 'Distant Thunder Rain',
+      description: 'Sound from https://cdn.freesound.org/previews/758/758785_2061858-hq.mp3',
+      preview_url: 'https://cdn.freesound.org/previews/758/758785_2061858-hq.mp3'
+    },
+    {
+      sound_id: 24,
+      source_url: 'https://cdn.freesound.org/previews/758/758785_2061858-hq.mp3',
+      freesound_id: 0,
+      file_path: '/sounds/0_1744998591346.mp3',
+      name: 'Autumn Leaves Footsteps',
+      description: 'Sound from https://cdn.freesound.org/previews/758/758785_2061858-hq.mp3',
+      preview_url: 'https://cdn.freesound.org/previews/758/758785_2061858-hq.mp3'
+    },
+    // Construction Site Sounds
+    {
+      sound_id: 25,
+      source_url: 'https://cdn.freesound.org/previews/119/119809_1059930-hq.mp3',
+      freesound_id: 0,
+      file_path: '/sounds/0_1745000222343.mp3',
+      name: 'Distant Jackhammer',
+      description: 'Sound from https://cdn.freesound.org/previews/119/119809_1059930-hq.mp3',
+      preview_url: 'https://cdn.freesound.org/previews/119/119809_1059930-hq.mp3'
+    },
+    {
+      sound_id: 26,
+      source_url: 'https://cdn.freesound.org/previews/132/132016_2268897-hq.mp3',
+      freesound_id: 0,
+      file_path: '/sounds/0_1745000222337.mp3',
+      name: 'Street Music vs. Jackhammer',
+      description: 'Sound from https://cdn.freesound.org/previews/132/132016_2268897-hq.mp3',
+      preview_url: 'https://cdn.freesound.org/previews/132/132016_2268897-hq.mp3'
+    },
+    {
+      sound_id: 27,
+      source_url: 'https://cdn.freesound.org/previews/619/619094_781461-hq.mp3',
+      freesound_id: 0,
+      file_path: '/sounds/0_1745000222324.mp3',
+      name: 'Construction Saw Machinery',
+      description: 'Sound from https://cdn.freesound.org/previews/619/619094_781461-hq.mp3',
+      preview_url: 'https://cdn.freesound.org/previews/619/619094_781461-hq.mp3'
+    },
+    {
+      sound_id: 28,
+      source_url: 'https://cdn.freesound.org/previews/779/779890_1661766-hq.mp3',
+      freesound_id: 0,
+      file_path: '/sounds/0_1745000222334.mp3',
+      name: 'Echoing Jackhammer Screeches',
+      description: 'Sound from https://cdn.freesound.org/previews/779/779890_1661766-hq.mp3',
+      preview_url: 'https://cdn.freesound.org/previews/779/779890_1661766-hq.mp3'
+    },
+    {
+      sound_id: 29,
+      source_url: 'https://cdn.freesound.org/previews/726/726334_14079354-hq.mp3',
+      freesound_id: 0,
+      file_path: '/sounds/0_1745000222328.mp3',
+      name: 'Gardening Construction Machinery',
+      description: 'Sound from https://cdn.freesound.org/previews/726/726334_14079354-hq.mp3',
+      preview_url: 'https://cdn.freesound.org/previews/726/726334_14079354-hq.mp3'
+    },
+    {
+      sound_id: 30,
+      source_url: 'https://cdn.freesound.org/previews/726/726344_14079354-hq.mp3',
+      freesound_id: 0,
+      file_path: '/sounds/0_1745000222212.mp3',
+      name: 'Gardening Construction Ambience',
+      description: 'Sound from https://cdn.freesound.org/previews/726/726344_14079354-hq.mp3',
+      preview_url: 'https://cdn.freesound.org/previews/726/726344_14079354-hq.mp3'
     }
   ];
   
@@ -196,6 +306,22 @@ exports.seed = async function(knex) {
       is_preset: true,
       image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=400',
       tags: ['Nature', 'Birds', 'Outdoors', 'Calming', 'Daytime']
+    },
+    {
+      soundscape_id: 4,
+      name: 'Rainy Forest Walk',
+      description: 'Rainy Forest Walk Soundscape',
+      is_preset: true,
+      image_url: 'https://images.unsplash.com/photo-1532690505755-416f854618da?q=80&fm=jpg&fit=crop&w=400&h=300&crop=entropy&cs=tinysrgb',
+      tags: ['Nature', 'Rain', 'Forest', 'Thunder', 'Relaxing']
+    },
+    {
+      soundscape_id: 5,
+      name: 'Construction Site',
+      description: 'Construction Site Soundscape',
+      is_preset: true,
+      image_url: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&fm=jpg&fit=crop&w=400&h=300&crop=entropy&cs=tinysrgb',
+      tags: ['Urban', 'Noise', 'Machinery', 'Industrial', 'City']
     }
   ];
   
@@ -307,6 +433,80 @@ exports.seed = async function(knex) {
       soundscape_id: 3,
       sound_id: 18,
       volume: -1.00,
+      pan: 0.00
+    },
+    // Rainy Forest Walk Soundscape
+    {
+      soundscape_id: 4,
+      sound_id: 19,
+      volume: -2.00,
+      pan: 0.00
+    },
+    {
+      soundscape_id: 4,
+      sound_id: 20,
+      volume: -9.00,
+      pan: 0.00
+    },
+    {
+      soundscape_id: 4,
+      sound_id: 21,
+      volume: -12.00,
+      pan: 0.00
+    },
+    {
+      soundscape_id: 4,
+      sound_id: 22,
+      volume: -9.00,
+      pan: 0.00
+    },
+    {
+      soundscape_id: 4,
+      sound_id: 23,
+      volume: -11.00,
+      pan: 0.00
+    },
+    {
+      soundscape_id: 4,
+      sound_id: 24,
+      volume: -12.00,
+      pan: 0.00
+    },
+    // Construction Site Soundscape
+    {
+      soundscape_id: 5,
+      sound_id: 25,
+      volume: 6.00,
+      pan: 0.00
+    },
+    {
+      soundscape_id: 5,
+      sound_id: 26,
+      volume: -4.00,
+      pan: 0.00
+    },
+    {
+      soundscape_id: 5,
+      sound_id: 27,
+      volume: -11.00,
+      pan: 0.00
+    },
+    {
+      soundscape_id: 5,
+      sound_id: 28,
+      volume: 4.00,
+      pan: 0.00
+    },
+    {
+      soundscape_id: 5,
+      sound_id: 29,
+      volume: -11.00,
+      pan: 0.00
+    },
+    {
+      soundscape_id: 5,
+      sound_id: 30,
+      volume: -11.00,
       pan: 0.00
     }
   ];
