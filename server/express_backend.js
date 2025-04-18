@@ -20,10 +20,8 @@ const authService = require('./services/authService');
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cors({
-  origin: ['http://localhost:3000',
-           'https://soundscapegen-ai-xef2.vercel.app',
-           'http://3.128.207.110:3000',         // deployed frontend (Elastic IP)
-           'http://localhost:3001'],
+  origin: [
+           'https://soundscapegen-ai-xef2.vercel.app'],         // deployed frontend
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -74,7 +72,7 @@ passport.deserializeUser(async (id, done) => {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "http://localhost:3001/api/auth/google/callback"
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3001/api/auth/google/callback'
   },
   async function(accessToken, refreshToken, profile, cb) {
     try {
@@ -901,12 +899,12 @@ app.get('/api/auth/google/callback',
                     token: "${token}", 
                     user: ${JSON.stringify(req.user)}
                   }, 
-                  "http://localhost:3000"
+                  "${process.env.CLIENT_BASE_URL}"
                 );
                 window.close();
               } catch (error) {
                 console.error('Error in postMessage:', error);
-                window.location.href = 'http://localhost:3000/login?error=message_failed';
+                window.location.href = '${process.env.CLIENT_BASE_URL}/login?error=message_failed';
               }
             </script>
           </body>
@@ -914,7 +912,7 @@ app.get('/api/auth/google/callback',
       `);
     } catch (error) {
       console.error('Error in Google callback:', error);
-      res.redirect('http://localhost:3000/login?error=server_error');
+      res.redirect('${process.env.CLIENT_BASE_URL}/login?error=server_error');
     }
   }
 );
@@ -1073,7 +1071,7 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
   console.log('Environment:', process.env.NODE_ENV || 'development');
-  console.log('CORS enabled for origins:', ['http://localhost:3000', 'http://localhost:3001']);
+  console.log('CORS enabled for origins:', ['https://soundscapegen-ai-xef2.vercel.app']);
 }).on('error', (err) => {
   console.error('Server failed to start:', err);
   if (err.code === 'EADDRINUSE') {
