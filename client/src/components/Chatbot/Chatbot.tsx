@@ -35,7 +35,8 @@ const Chatbot = () => {
 
     try {
       // Send message to backend
-      const response = await fetch('http://localhost:3001/api/chat', {
+      // use 'http://localhost:3001/api/chat' instead of `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/chat` in local dev
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: inputValue })

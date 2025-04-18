@@ -92,7 +92,8 @@ const Mixer = () => {
         setSoundscapeName(data.soundscape.name);
 
         // Extract sound file paths, IDs, volumes, pans, and names
-        const soundPaths = data.sounds.map(sound => `http://localhost:3001${sound.file_path}`);
+        // use  http://localhost:3001 for local dev instead of ${process.env.NEXT_PUBLIC_API_BASE_URL}
+        const soundPaths = data.sounds.map(sound => `${process.env.NEXT_PUBLIC_API_BASE_URL}${sound.file_path}`);
         const soundIds = data.sounds.map(sound => sound.sound_id);
         const volumes = data.sounds.map(sound => Math.round(sound.volume || 1.0));
         const pans = data.sounds.map(sound => sound.pan || 0.0);

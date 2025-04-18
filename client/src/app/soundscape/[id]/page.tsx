@@ -39,7 +39,8 @@ export default function SoundscapePage() {
           setSoundscapeDetails(data);
           
           // Extract data for AudioMixer
-          const urls = data.sounds.map(sound => sound.file_path ? `http://localhost:3001${sound.file_path}` : (sound.preview_url || ''));
+          // use http://localhost:3001${sound.file_path}` in local env
+          const urls = data.sounds.map(sound => sound.file_path ? `${process.env.NEXT_PUBLIC_API_BASE_URL}${sound.file_path}` : (sound.preview_url || ''));
           const ids = data.sounds.map(sound => sound.sound_id);
           const volumes = data.sounds.map(sound => Math.round(sound.volume || 1.0));
           const pans = data.sounds.map(sound => sound.pan || 0.0);
@@ -70,8 +71,9 @@ export default function SoundscapePage() {
   //function for Dowloand feature
   async function downloadCombinedAudio() {
     setDownloading(true);
+    // use `http://localhost:3001/api/soundscapes/${soundscapeId}/download` in local env
     try {
-      const res = await fetch(`http://localhost:3001/api/soundscapes/${soundscapeId}/download`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/soundscapes/${soundscapeId}/download`);
 
       if (!res.ok) throw new Error("Failed to generate merged combined audio");
 
