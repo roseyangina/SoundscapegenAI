@@ -20,7 +20,8 @@ const authService = require('./services/authService');
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cors({
-  origin: ['http://localhost:3000', 
+  origin: ['http://localhost:3000',
+           'https://soundscapegen-ai-xef2.vercel.app',
            'http://3.128.207.110:3000',         // deployed frontend (Elastic IP)
            'http://localhost:3001'],
   credentials: true,
