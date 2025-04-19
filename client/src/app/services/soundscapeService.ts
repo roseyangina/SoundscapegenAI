@@ -19,6 +19,17 @@ export async function getKeywords(inputString: string): Promise<KeywordResponse>
   return await res.json();
 }
 
+// autogenerate from server
+export async function getAutoKeywords(): Promise<KeywordResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/autogen-prompt`);
+
+  if (!res.ok) {
+    throw new Error(`HTTP Error Status: ${res.status}`);
+  }
+
+  return await res.json(); 
+}
+
 // Download a sound from the server
 export async function downloadSound(sound: Sound) {
   const downloadRes = await fetch(`${API_BASE_URL}/api/sounds/download`, {
@@ -93,7 +104,7 @@ export async function addSoundToSoundscape(
 }
 
 // Create a soundscape from the server
-export async function createSoundscape(name: string, description: string, soundIds: Array<{ sound_id: number, volume: number, pan: number }>): Promise<SoundscapeResponse> {
+export async function createSoundscape(name: string, description: string, soundIds: Array<{ sound_id: number, volume: number, pan: number }>, imageUrl?: string ): Promise<SoundscapeResponse> {
   const createRes = await fetch(`${API_BASE_URL}/api/soundscapes`, {
     method: 'POST',
     headers: {
@@ -102,7 +113,8 @@ export async function createSoundscape(name: string, description: string, soundI
     body: JSON.stringify({
       name,
       description,
-      sound_ids: soundIds
+      sound_ids: soundIds,
+      image_url: imageUrl
     })
   });
 
@@ -163,7 +175,7 @@ export async function getDescription(inputString: string) {
   });
 
   if (!res.ok) {
-    throw new Error(`Failed to get track names: HTTP Error Status: ${res.status}`);
+    throw new Error(`Failed to get description: HTTP Error Status: ${res.status}`);
   }
 
   const data = await res.json();

@@ -177,6 +177,8 @@ Description: "{sound_description}"
 The names should be concise, descriptive, and focused on what the sound actually is (not poetic or abstract).
 Ignore any irrelevant details in the description. Focus on creating practical, useful names that accurately describe the sound content.
 
+Make sure each name is unique even if the sounds have similar descriptions.
+
 {sounds_data}
 
 Format your response as a JSON array of strings containing ONLY the new names in the same order as the sounds above.
@@ -294,3 +296,68 @@ def generate_description(user_text: str) -> str:
     except Exception as e:
         print("Error generating description with Mistral:", e)
         return ""  # fallback: return an empty string or handle as needed
+
+import random
+
+def auto_generate_keywords(min_keywords: int = 6):
+    """
+    Randomly selects a style/mood and uses Mistral to generate
+    6 creative, sound-relevant keywords in that style.
+
+    Returns:
+        dict: { "style": str, "keywords": List[str] }
+    """
+    styles = [
+        "lo-fi", "jazzy", "cinematic", "upbeat", "classical", "ambient",
+        "melancholic piano", "folk acoustic", "grunge", "funky",
+        "orchestral", "violin", "angelic", "serene", "uplifting", "forest sounds",
+        "sunset vibes", "midnight jazz"
+    ]
+
+    selected_style = random.choice(styles)
+
+    prompt_str = f"""
+    You are a creative sound designer. The selected style is "{selected_style}".
+
+    Generate exactly {min_keywords} sound-relevant keywords that match or are inspired by this style.
+    These will be used to search a sound database, so be descriptive, musical, and creative. 
+
+    Avoid repeating the style name in every keyword. Think of instruments, moods, textures, ambiences, or audio scenes that fit.
+
+    Return ONLY a JSON array of strings.
+    Important: Return ONLY the JSON array, no other text or explanation.
+    For example:
+    ["vinyl crackle", "smooth saxophone", "cafe chatter", "soft rain", "bass groove", "city night ambience"]
+    """.strip()
+
+    try:
+        response = mistral_client.chat.complete(
+            model=MODEL_NAME,
+            messages=[{"role": "user", "content": prompt_str}],
+        )
+
+        raw_text = response.choices[0].message.content.strip()
+        if "```json" in raw_text:
+            raw_text = raw_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw_text:
+            raw_text = raw_text.split("```")[-1].strip()
+
+        try:
+            keywords = json.loads(raw_text)
+            if not isinstance(keywords, list):
+                return []
+
+            keywords = [k.strip() for k in keywords if k.strip()]
+            return keywords[:min_keywords]
+
+        except json.JSONDecodeError:
+            # Fallback: Try regex if JSON fails
+            fallback_keywords = re.findall(r'"([^"]+)"', raw_text)
+            if fallback_keywords and len(fallback_keywords) >= 3:
+                return fallback_keywords[:min_keywords]
+
+            return []
+
+    except Exception as e:
+        print("Error auto-generating keywords with Mistral:", e)
+        return []

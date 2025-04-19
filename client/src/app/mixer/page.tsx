@@ -46,8 +46,15 @@ const Mixer = () => {
     }
 
     // Fetch description
-    const descriptionResult = getDescription(titleParam);
-    setDescription(descriptionResult);
+    //const descriptionResult = getDescription(titleParam);
+    //setDescription(descriptionResult);
+    if (!titleParam) return;  // If there's no title 
+
+    getDescription(titleParam)  // fetch description using the title
+      .then((desc) => setDescription(desc)) // On success, set the returned description
+      .catch((err) => {
+        console.error("Failed to load description:", err);
+      });
 
     // Otherwise, load from URL parameters as before
     if (soundsQueryParam) {

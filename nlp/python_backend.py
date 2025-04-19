@@ -1,9 +1,13 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from nlp_model import get_keywords, generate_track_names, generate_description, mistral_client, MODEL_NAME
+from nlp_model import get_keywords, generate_track_names, generate_description, auto_generate_keywords, mistral_client, MODEL_NAME
 from freesound import search_freesound
 from unsplash_image import get_unsplash_image
 import json
+
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -98,7 +102,6 @@ def keywords():
     try:
         # Extract keywords using Mistral-based NLP function
         keywords_result = get_keywords(input_str, min_keywords=6)
-
         # Check if the result indicates an invalid input (non-soundscape)
         if isinstance(keywords_result, dict) and keywords_result.get('error'):
             return jsonify(
@@ -139,7 +142,6 @@ def keywords():
             
         # Generate more descriptive track names using Mistral
         sounds_with_better_names = generate_track_names(sounds_info)
-
         return jsonify(success=True, keywords=keywords_result, sounds=sounds_with_better_names), 200
 
     except Exception as e:
@@ -337,6 +339,52 @@ def chat():
 
     except Exception as e:
         print(f"Error in chat endpoint: {str(e)}")
+        return jsonify(success=False, message=str(e)), 500
+
+@app.route('/api/auto-keywords', methods=['GET']) 
+def auto_keywords():
+    """
+    Auto-generates keywords using Mistral and finds matching sounds.
+    Returns keywords and matching sounds.
+    """
+    try:
+        # Use Mistral to generate keywords
+        keywords_result = auto_generate_keywords(min_keywords=6)
+
+        # Return fallback if no keywords
+        if not keywords_result:
+            return jsonify(
+                success=True,
+                message="No keywords generated, returning fallback.",
+                keywords=[],
+                sounds=[]
+            ), 200
+
+        # Fetch sounds from FreeSound
+        freesound_results = search_freesound(keywords_result)
+        if not freesound_results or 'results' not in freesound_results:
+            return jsonify(success=False, message="No sounds found.", keywords=keywords_result), 404
+
+        # Format top 6 sounds
+        top_sounds = freesound_results["results"][:6]
+        sounds_info = []
+        for index, sound in enumerate(top_sounds, start=1):
+            sounds_info.append({
+                "sound_number": f"Sound {index}",
+                "name": sound.get("name", "Unknown"),
+                "description": sound.get("description", "No description available"),
+                "sound_url": sound.get("download", "No URL provided"),
+                "preview_url": sound.get("preview_url", ""),
+                "freesound_id": sound.get("id")
+            })
+
+        # Generate better names
+        sounds_with_better_names = generate_track_names(sounds_info)
+
+        return jsonify(success=True, keywords=keywords_result, sounds=sounds_with_better_names), 200
+
+    except Exception as e:
+        print("Exception in /api/auto-keywords:", e)
         return jsonify(success=False, message=str(e)), 500
 
 # Run the Flask application when this script is executed directly
