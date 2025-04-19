@@ -19,16 +19,16 @@ class AuthService {
     return hash === calculatedHash;
   }
 
-  generateToken(user) {
+  generateToken(user) { // Generate a JWT token for the user
     const payload = {
       userId: user.user_id,
       email: user.email,
       username: user.username
     };
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN }); // Sign the payload with the JWT secret and return the token
   }
 
-  verifyToken(token) {
+  verifyToken(token) { // Verify a JWT token
     try {
       return jwt.verify(token, JWT_SECRET);
     } catch (error) {

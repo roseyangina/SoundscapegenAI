@@ -26,4 +26,5 @@ export interface AudioMixexProps {
     trackNames?: string[]; // Array of descriptive names for each track
     soundscapeId?: string;
     imageUrl?: string; // URL for the soundscape image
+    description?: string; // Description for the audio sound
 } 

@@ -7,7 +7,7 @@ import { getContext } from "tone";
 
 import { AudioTrack, AudioMixexProps } from './types';
 import { SoundscapeResponse, Sound } from '@/app/types/soundscape';
-import { createSoundscape, getDescription, getImage, downloadSound, searchSingleSound, addSoundToSoundscape } from '@/app/services/soundscapeService';
+import { createSoundscape, getImage, downloadSound, searchSingleSound, addSoundToSoundscape } from '@/app/services/soundscapeService';
 
 // We create a cache to store Tone.Player instances keyed by their URL. This is to ensure that each sound loads exactly once
 const playerCache = new Map<string, Tone.Player>();
@@ -21,7 +21,7 @@ const getPlayer = (
   if (playerCache.has(url)) {
     return playerCache.get(url)!;
   }
-  const player = new Tone.Player({
+  const player = new Tone.Player({ // Create a new Tone.Player instance
     url,
     loop: true,
     autostart: false,
@@ -61,6 +61,7 @@ const calculateNormalizedVolume = (peakDb: number): number => {
   return Math.round(adjustment);
 };
 
+// AudioMixer component
 const AudioMixer: React.FC<AudioMixexProps> = ({
   soundUrls,
   soundIds = [],
@@ -70,7 +71,8 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
   readOnly = false,
   trackNames : initialTrackNames = [], // renamed prop
   soundscapeId,
-  imageUrl
+  imageUrl,
+  description
 }) => {
 
   const [tracks, setTracks] = useState<AudioTrack[]>([]);
@@ -90,7 +92,6 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
   const [saveSuccess, setSaveSuccess] = useState<SoundscapeResponse | null>(null);
 
   const [localImageUrl, setLocalImageUrl] = useState<string>(imageUrl || "");
-  const [soundDescription, setDescription] = useState("");
 
   const [play, setPlay] = useState<boolean>(true);
   const [muted, setMuted] = useState<boolean>(false);
@@ -117,7 +118,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
         const initialVolume = initialVolumes[index] !== undefined ? initialVolumes[index] : 0;
         const initialPan = initialPans[index] !== undefined ? initialPans[index] : 0;
         
-        const player = getPlayer(url, index, () => {
+        const player = getPlayer(url, index, () => { // Get a player instance
           try {
             const playerAny = player as any;
             if (playerAny.buffer && playerAny.buffer.get) { // checking buffer is loaded
@@ -144,15 +145,15 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
             console.error("Error analyzing audio:", error);
           }
           
-          setLoadedCount((prev) => prev + 1);
+          setLoadedCount((prev) => prev + 1); // Increment the loaded count
         });
-        
-        const panner = new Tone.Panner(initialPan);
-        const volume = new Tone.Volume(initialVolume);
 
-        player.connect(panner);
-        panner.connect(volume);
-        volume.connect(masterVolumeNode.current!);
+        const panner = new Tone.Panner(initialPan); // Create a new Tone.Panner instance
+        const volume = new Tone.Volume(initialVolume); // Create a new Tone.Volume instance
+
+        player.connect(panner); // Connect the player to the panner
+        panner.connect(volume); // Connect the panner to the volume
+        volume.connect(masterVolumeNode.current!); // Connect the volume to the master volume node
 
         return {
           id: index,
@@ -172,9 +173,9 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       setTracks(newTracks);
     };
 
-    initAudio();
+    initAudio(); // Initialize the audio
 
-    return () => {
+    return () => { // Cleanup the audio context by disposing of the master volume node, analyzer, and animation frame
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
@@ -193,48 +194,48 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
 
   useEffect(() => { // Waveform figure drawing
     if (!isLoaded || !canvasRef.current || !analyzerRef.current) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const canvas = canvasRef.current; // Get the canvas element
+    const ctx = canvas.getContext("2d"); // Get the 2D context
+    if (!ctx) return; // If the context is not available, return
 
     const drawWaveform = () => {
-      const data = analyzerRef.current!.getValue() as Float32Array;
-      const width = canvas.width;
-      const height = canvas.height;
+      const data = analyzerRef.current!.getValue() as Float32Array; // Get the value of the analyzer
+      const width = canvas.width; // Get the width of the canvas
+      const height = canvas.height; // Get the height of the canvas
 
-      ctx.clearRect(0, 0, width, height);
-      ctx.beginPath();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "#278F7C";
+      ctx.clearRect(0, 0, width, height); // Clear the canvas
+      ctx.beginPath(); // Begin the path
+      ctx.lineWidth = 2; // Set the line width
+      ctx.strokeStyle = "#278F7C"; // Set the stroke style
 
       // We amplify waveform so that it's louder
       const amplification = 1.5;
       const sliceWidth = width / data.length;
       let x = 0;
 
-      for (let i = 0; i < data.length; i++) {
-        const sample = Math.max(-1, Math.min(1, data[i] * amplification));
-        const y = ((sample + 1) / 2) * height;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-        x += sliceWidth;
+      for (let i = 0; i < data.length; i++) { // Iterate through the data
+        const sample = Math.max(-1, Math.min(1, data[i] * amplification)); // Calculate the sample
+        const y = ((sample + 1) / 2) * height; // Calculate the y coordinate
+        if (i === 0) ctx.moveTo(x, y); // Move to the start of the path
+        else ctx.lineTo(x, y); // Draw a line to the next point
+        x += sliceWidth; // Increment the x coordinate
       }
 
-      ctx.stroke();
-      animationFrameRef.current = requestAnimationFrame(drawWaveform);
+      ctx.stroke(); // Stroke the path
+      animationFrameRef.current = requestAnimationFrame(drawWaveform); // Request the next animation frame
     };
 
     drawWaveform();
 
-    return () => {
+    return () => { // Cleanup the animation frame
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
   }, [isLoaded]);
 
-  useEffect(() => {
-    let counter: NodeJS.Timeout;
+  useEffect(() => { // Update the timer every second
+    let counter: NodeJS.Timeout; 
     if (!play) {
       //counter = setInterval(() => setTimer(timer => timer + 1), 1000);
       // Use the first track's offset as the base
@@ -242,18 +243,18 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       setTimer(baseOffset);
 
       counter = setInterval(() => {
-        setTimer((prev) => prev + 1);
+        setTimer((prev) => prev + 1); // Increment the timer
       }, 1000);
     }
-    return () => {
+    return () => { // Cleanup the timer
       clearInterval(counter);
     };
   }, [play, tracks])
 
-  useEffect(() => {
+  useEffect(() => { // Fetch the image
     if (!title) return;
 
-    const fetchImageAndDescription = async () => {
+    const fetchImage = async () => {
       // Fetch image if not already set
       if (!localImageUrl && title) {
         try {
@@ -264,22 +265,15 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
         }
       }
 
-      // Fetch description
-      try {
-        const descriptionResult = await getDescription(title);
-        setDescription(descriptionResult);
-      } catch (error) {
-        console.error("Failed to fetch description:", error);
-      }
     };
 
-    fetchImageAndDescription();
+    fetchImage(); // Fetch the image and 
   }, [title, localImageUrl]);
 
-  const formatTimer = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  const formatTimer = (seconds: number) => { // Format the timer
+    const mins = Math.floor(seconds / 60); // Calculate the minutes
+    const secs = seconds % 60; // Calculate the seconds
+    return `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`; // Return the formatted timer
   };
 
   const scheduleStartWithDelay = (trackId: number, delayMs: number) => { // add small delay so that we have all tracks loaded before starting
@@ -287,11 +281,11 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       prev.map((track) => {
         if (track.id !== trackId) return track;
         track.player.stop();
-        if (track.pendingStartTimer !== null) {
+        if (track.pendingStartTimer !== null) { // If the pending start timer is not null
           clearTimeout(track.pendingStartTimer);
           track.pendingStartTimer = null;
         }
-        const timerId = window.setTimeout(() => {
+        const timerId = window.setTimeout(() => { // Set a timeout to start the track
           try {
             //track.player.start();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -339,20 +333,20 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
 
   const handleVolumeChange = (trackId: number, value: number) => { // handle change in volume for any singular track
     setTracks((prev) =>
-      prev.map((track) => {
+      prev.map((track) => { // Map through the tracks and update the volume
         if (track.id === trackId) {
-          const roundedValue = Math.round(value);
-          track.volume.volume.value = roundedValue;
-          return { ...track, volumeLevel: roundedValue};
+          const roundedValue = Math.round(value); // Round the value to the nearest integer
+          track.volume.volume.value = roundedValue; // Update the volume
+          return { ...track, volumeLevel: roundedValue}; // Return the updated track
         }
         return track;
       })
     );
   };
 
-  const handleMute = (trackId: number) => {
+  const handleMute = (trackId: number) => { // Handle mute for any singular track
     setTracks((prev) =>
-      prev.map((track) => {
+      prev.map((track) => { // Map through the tracks and update the mute
         if (track.id === trackId) {
           track.volume.mute = !track.isMuted;
           return { ...track, isMuted: !track.isMuted };
@@ -400,6 +394,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     }
   };
 
+  // Mute all tracks
   const handleMuteAll = () => {
     setMuted(prevMuted => {
       const newMuted = !prevMuted;
@@ -415,7 +410,8 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     });
   };
   
-  const handlePanChange = (trackId: number, value: number) => { // handle change in pan for any singular track
+  // Handle pan change for any singular track
+  const handlePanChange = (trackId: number, value: number) => {
     setTracks((prev) =>
       prev.map((track) => {
         if (track.id === trackId) {
@@ -427,11 +423,12 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     );
   };
 
-  const handleMasterVolumeChange = (value: number) => { // handle change in master volume
-    if (masterVolumeNode.current) {
-      const roundedValue = Math.round(value);
-      masterVolumeNode.current.volume.value = roundedValue;
-      setMasterVolume(roundedValue);
+  // Handle master volume change
+  const handleMasterVolumeChange = (value: number) => {
+    if (masterVolumeNode.current) { // If the master volume node is current
+      const roundedValue = Math.round(value); // Round the value to the nearest integer
+      masterVolumeNode.current.volume.value = roundedValue; // Update the master volume
+      setMasterVolume(roundedValue); // Set the master volume
     }
   };
 
@@ -556,9 +553,11 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     }, 0); // ensures it runs after state update
   };  
 
+  // Rewind and forward by 10
   const rewind10 = () => seekAll(-10);
   const forward10 = () => seekAll(10);
 
+  // Finalize the soundscape and show the save modal
   const handleFinalize = () => {
     setShowSaveModal(true);
   };
@@ -607,11 +606,11 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       
       // Filter out any null results (failed downloads) and map to the expected structure
       const soundsWithSettings = downloadedResults
-        .filter(result => result !== null)
+        .filter(result => result !== null) // Filter out any null results (failed downloads)
         .map(result => ({
-          sound_id: result!.downloaded_id,
-          volume: result!.volume,
-          pan: result!.pan
+          sound_id: result!.downloaded_id, // Map to the expected structure 
+          volume: result!.volume, // Volume from the track
+          pan: result!.pan // Pan from the track
         }));
 
       if (soundsWithSettings.length === 0) {
@@ -623,7 +622,8 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       const result = await createSoundscape(
         soundscapeName,
         soundscapeDescription,
-        soundsWithSettings
+        soundsWithSettings,
+        localImageUrl // added for image persistence *
       );
       
       console.log('Soundscape saved successfully:', result);
@@ -639,6 +639,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     }
   };
 
+  // Save is cancelled
   const handleCancelSave = () => {
     setShowSaveModal(false);
     setSoundscapeName("");
@@ -646,11 +647,13 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     setSaveSuccess(null);
   };
 
+  // Show the add sound modal
   const handleShowAddSoundModal = () => {
     setShowAddSoundModal(true);
     setSoundQuery("");
   };
 
+  // Cancel the add sound modal
   const handleCancelAddSound = () => {
     setShowAddSoundModal(false);
     setSoundQuery("");
@@ -659,6 +662,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     setIsAddingSound(false);
   };
 
+  // Search for a sound
   const handleSearchSound = async () => {
     if (!soundQuery.trim()) {
       alert("Please enter a search term");
@@ -690,6 +694,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     }
   };
 
+  // Add a sound
   const handleAddSound = async () => {
     if (!searchedSound) {
       return;
@@ -802,6 +807,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     }
   };
 
+  // If the tracks are not loaded, show the loading screen
   if (!isLoaded) {
     return (
       <div className="audio-mixer-loading">
@@ -938,10 +944,6 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
             <div className="mix-button">
               <p className="mix-title"> MIX </p>
             </div>
-          </div>
-
-          <div className="display-text">
-            <p>Main</p>
           </div>
         </div>
 
@@ -1115,7 +1117,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       <div className='information-wrapper'>
         <div className="information">
           <p className='infor-title'>{title}</p>
-          <p className='infor-description'>{soundDescription}</p>
+          <p className='infor-description'>{description}</p>
           <p className='infor-tags'>Included sound tracks: </p>
           <ul className="infor-sounds-list">
             {tracks.map((track) => {

@@ -2,6 +2,7 @@ import { KeywordResponse, Sound, SoundscapeDetails, SoundscapeResponse } from '.
 // use 'http://localhost:3001' with quotes in place of process.env.NEXT_PUBLIC_API_BASE_URL in local dev
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+// Get keywords from the server
 export async function getKeywords(inputString: string): Promise<KeywordResponse> {
   const res = await fetch(`${API_BASE_URL}/api/keywords`, {
     method: 'POST',
@@ -18,6 +19,18 @@ export async function getKeywords(inputString: string): Promise<KeywordResponse>
   return await res.json();
 }
 
+// autogenerate from server
+export async function getAutoKeywords(): Promise<KeywordResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/autogen-prompt`);
+
+  if (!res.ok) {
+    throw new Error(`HTTP Error Status: ${res.status}`);
+  }
+
+  return await res.json(); 
+}
+
+// Download a sound from the server
 export async function downloadSound(sound: Sound) {
   const downloadRes = await fetch(`${API_BASE_URL}/api/sounds/download`, {
     method: 'POST',
@@ -40,6 +53,7 @@ export async function downloadSound(sound: Sound) {
   return await downloadRes.json();
 }
 
+// Search for a single sound from the server
 export async function searchSingleSound(query: string): Promise<Sound | null> {
   try {
     const res = await fetch(`${API_BASE_URL}/api/sounds/search`, {
@@ -69,10 +83,11 @@ export async function searchSingleSound(query: string): Promise<Sound | null> {
   }
 }
 
+// Add a sound to a soundscape from the server
 export async function addSoundToSoundscape(
   soundscapeId: number, 
   soundData: { sound_id: number, volume: number, pan: number }
-): Promise<SoundscapeDetails> {
+): Promise<SoundscapeDetails> { // Add a sound to a soundscape from the server
   const res = await fetch(`${API_BASE_URL}/api/soundscapes/${soundscapeId}/sounds`, {
     method: 'POST',
     headers: {
@@ -88,7 +103,8 @@ export async function addSoundToSoundscape(
   return await res.json();
 }
 
-export async function createSoundscape(name: string, description: string, soundIds: Array<{ sound_id: number, volume: number, pan: number }>): Promise<SoundscapeResponse> {
+// Create a soundscape from the server
+export async function createSoundscape(name: string, description: string, soundIds: Array<{ sound_id: number, volume: number, pan: number }>, imageUrl?: string ): Promise<SoundscapeResponse> {
   const createRes = await fetch(`${API_BASE_URL}/api/soundscapes`, {
     method: 'POST',
     headers: {
@@ -97,7 +113,8 @@ export async function createSoundscape(name: string, description: string, soundI
     body: JSON.stringify({
       name,
       description,
-      sound_ids: soundIds
+      sound_ids: soundIds,
+      image_url: imageUrl
     })
   });
 
@@ -108,12 +125,13 @@ export async function createSoundscape(name: string, description: string, soundI
   return await createRes.json();
 }
 
+// Get a soundscape by ID from the server
 export async function getSoundscapeById(id: string): Promise<SoundscapeDetails> {
   console.log(`Fetching soundscape with ID: ${id} from ${API_BASE_URL}/api/soundscapes/${id}`);
   try {
     const res = await fetch(`${API_BASE_URL}/api/soundscapes/${id}`);
     
-    if (!res.ok) {
+    if (!res.ok) { // If the response is not successful, print an error message
       const errorText = await res.text();
       console.error(`Failed to fetch soundscape: HTTP ${res.status}, Response: ${errorText}`);
       throw new Error(`Failed to fetch soundscape: ${res.status} - ${errorText}`);
@@ -128,6 +146,7 @@ export async function getSoundscapeById(id: string): Promise<SoundscapeDetails> 
   }
 }
 
+// Get track names from the server
 export async function getTrackNames(sounds: Sound[]): Promise<Sound[]> {
   const res = await fetch(`${API_BASE_URL}/api/track-names`, {
     method: 'POST',
@@ -145,6 +164,7 @@ export async function getTrackNames(sounds: Sound[]): Promise<Sound[]> {
   return data.success ? data.sounds : sounds; // Return original sounds as fallback
 } 
 
+// Get a description from the server
 export async function getDescription(inputString: string) {
 
   console.log("getDescription: inputString sent =", inputString); // Added log to track
@@ -158,7 +178,7 @@ export async function getDescription(inputString: string) {
   });
 
   if (!res.ok) {
-    throw new Error(`HTTP error, status ${res.status}`);
+    throw new Error(`Failed to get description: HTTP Error Status: ${res.status}`);
   }
 
   const data = await res.json();
@@ -168,9 +188,10 @@ export async function getDescription(inputString: string) {
   return data.description as string;
 }
 
+// Get an image from the server
 export async function getImage(inputString: string): Promise<string> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/get-image`, {
+    const res = await fetch(`${API_BASE_URL}/api/get-image`, { // Get an image from the server
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -178,12 +199,12 @@ export async function getImage(inputString: string): Promise<string> {
       body: JSON.stringify({ str: inputString })
     });
 
-    if (!res.ok) {
+    if (!res.ok) { // If the response is not successful, print an error message
       throw new Error(`Unsplash fetch failed: ${res.status}`);
     }
     
     const data = await res.json();
-    if (data.success && data.image_url) {
+    if (data.success && data.image_url) { // If the response is successful and the image URL is provided, return the image URL
       return data.image_url;
     } else {
       console.warn("No image results found for query:", inputString);

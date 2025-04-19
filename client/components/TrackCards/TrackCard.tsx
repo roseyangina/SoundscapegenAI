@@ -37,12 +37,13 @@ const TrackCard: React.FC<TrackCardProps> = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  // Handle time update
   const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      const current = audioRef.current.currentTime;
-      const duration = audioRef.current.duration;
-      const percent = (current / duration) * 100;
-      setProgress(percent);
+    if (audioRef.current) { // If the audio reference is current
+      const current = audioRef.current.currentTime; // Get the current time
+      const duration = audioRef.current.duration; // Get the duration
+      const percent = (current / duration) * 100; // Calculate the percentage
+      setProgress(percent); // Set the progress
     }
   };
 
@@ -76,14 +77,15 @@ const TrackCard: React.FC<TrackCardProps> = ({
     // Prevent the click from propagating to the parent container
     e.stopPropagation();
 
-    const rect = progressContainerRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const newProgress = (clickX / rect.width);
-    const newTime = newProgress * audioRef.current.duration;
-    audioRef.current.currentTime = newTime;
-    setProgress(newProgress * 100);
+    const rect = progressContainerRef.current.getBoundingClientRect(); // Get the bounding client rect
+    const clickX = e.clientX - rect.left; // Get the click x
+    const newProgress = (clickX / rect.width); // Calculate the new progress
+    const newTime = newProgress * audioRef.current.duration; // Calculate the new time
+    audioRef.current.currentTime = newTime; // Set the current time
+    setProgress(newProgress * 100); // Set the progress
   };
 
+  // Use effect to handle time update
   useEffect(() => {
     const audio = audioRef.current;
     if (audio) {

@@ -6,7 +6,7 @@ import "./mixer.css";
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getSoundscapeById } from "../services/soundscapeService";
+import { getDescription, getSoundscapeById } from "../services/soundscapeService";
 import Link from "next/link";
 import About from "../../../components/About/About";
 import { Sound } from "../types/soundscape";
@@ -25,6 +25,7 @@ const Mixer = () => {
   const [soundscapeName, setSoundscapeName] = useState<string | null>(null);
   const [title, setTitle] = useState<string | null>(null);
   const [soundscapeId, setSoundscapeId] = useState<string | null>(null);
+  const [soundDescription, setDescription] = useState("");
 
   useEffect(() => {
     const soundsQueryParam = searchParams.get("sounds"); //get sounds from the urls
@@ -39,9 +40,21 @@ const Mixer = () => {
         return;
     }
 
+    // If there is a title query parameter, set the title
     if (titleParam) {
         setTitle(decodeURIComponent(titleParam));
     }
+
+    // Fetch description
+    //const descriptionResult = getDescription(titleParam);
+    //setDescription(descriptionResult);
+    if (!titleParam) return;  // If there's no title 
+
+    getDescription(titleParam)  // fetch description using the title
+      .then((desc) => setDescription(desc)) // On success, set the returned description
+      .catch((err) => {
+        console.error("Failed to load description:", err);
+      });
 
     // Otherwise, load from URL parameters as before
     if (soundsQueryParam) {
@@ -65,6 +78,7 @@ const Mixer = () => {
       }
     }
 
+    // If there is a sound ids query parameter, load the sound ids
     if (soundIdsQueryParam) {
         try {
             const parsedSoundIds = JSON.parse(decodeURIComponent(soundIdsQueryParam)); // decode and parse sound urls
@@ -92,21 +106,22 @@ const Mixer = () => {
         setSoundscapeName(data.soundscape.name);
 
         // Extract sound file paths, IDs, volumes, pans, and names
-        // use  http://localhost:3001 for local dev instead of ${process.env.NEXT_PUBLIC_API_BASE_URL}
-        const soundPaths = data.sounds.map(sound => `${process.env.NEXT_PUBLIC_API_BASE_URL}${sound.file_path}`);
+        const soundPaths = data.sounds.map(sound => `http://localhost:3001${sound.file_path}`);
         const soundIds = data.sounds.map(sound => sound.sound_id);
         const volumes = data.sounds.map(sound => Math.round(sound.volume || 1.0));
         const pans = data.sounds.map(sound => sound.pan || 0.0);
         const names = data.sounds.map(sound => sound.name || `Sound ${sound.sound_id}`);
 
         // Update state with the soundscape data
+        // setTitle(title);
+        // setDescription(soundDescription);
         setSounds(soundPaths);
         setSoundIds(soundIds);
         setSoundVolumes(volumes);
         setSoundPans(pans);
         setTrackNames(names);
         setSoundscapeId(soundscapeId);
-    } catch (err) {
+    } catch (err) { // If there is an error, print an error message
         console.error("Error loading soundscape:", err);
         setError("Failed to load soundscape. It may not exist or has been removed.");
     } finally {
@@ -144,6 +159,7 @@ const Mixer = () => {
                         title={title}
                         trackNames={trackNames}
                         soundscapeId={soundscapeId || undefined}
+                        description={soundDescription}
                     />
                 ) : (
                     <p>Loading sounds...</p>

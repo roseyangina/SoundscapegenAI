@@ -5,6 +5,9 @@ import Navbar from "../../components/Navbar/Navbar";
 import TrackCard from "../../components/TrackCards/TrackCard";
 import Category from "../../components/Category/Category";
 import About from "../../components/About/About";
+import styles from './page.module.css';
+import './globals.css';
+
 
 import { AuthProvider } from '../../components/AuthContext';
 
@@ -12,6 +15,7 @@ import { KeywordResponse, SoundscapeDetails, SoundscapeResponse } from "./types/
 import { getKeywords, downloadSound, createSoundscape, getSoundscapeById } from "./services/soundscapeService";
 import { useRouter } from "next/navigation"; // Correct for App Router
 
+// Home component, wraps the content in the AuthProvider to provide authentication context
 export default function Home() {
   return (
     <AuthProvider>
@@ -35,6 +39,10 @@ function HomeContent() {
   const [isLoadingSoundscape, setIsLoadingSoundscape] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  //separate loading states
+  const [isAutogenerating, setIsAutogenerating] = useState(false);
+  const [autogenMessage, setAutogenMessage] = useState("");
+
   const [inputError, setInputError] = useState<{message: string, suggestions: string[]} | null>(null);
 
   function generateTitleFromKeywords(keywords: string[]): string {
@@ -92,6 +100,7 @@ function HomeContent() {
   }
 
   async function handleSubmit(e: React.MouseEvent<HTMLButtonElement>) {
+    e?.preventDefault();
     // Clear previous errors and set loading state
     setInputError(null);
     setIsLoading(true);
@@ -116,6 +125,7 @@ function HomeContent() {
           errorMessage = `API request failed: ${response.status} ${response.statusText}`;
         }
         
+        // Set the input error
         setInputError({
           message: errorMessage,
           suggestions: [
@@ -211,7 +221,7 @@ function HomeContent() {
     }
 
     setIsCreatingSoundscape(true);
-    try {
+    try { // Download the sounds
       const downloadedSounds = await Promise.all(
         response.sounds.map(async (sound) => {
           return await downloadSound(sound);
@@ -239,7 +249,7 @@ function HomeContent() {
     setIsLoadingSoundscape(true);
     setSoundscapeDetails(null);
 
-    try {
+    try { // Get the soundscape from the db
       const data = await getSoundscapeById(soundscapeId);
       setSoundscapeDetails(data);
     } catch (err) {
@@ -264,6 +274,53 @@ function HomeContent() {
     }
   };
 
+  async function handleAutogen() {
+    setInputError(null);
+    setAutogenMessage(""); // Starting with no message
+    setIsAutogenerating(true);
+
+    const msgTimeouts = [
+      setTimeout(() => setAutogenMessage("Just a moment..."), 5000),
+      setTimeout(() => setAutogenMessage("Interesting..."), 10000),
+      setTimeout(() => setAutogenMessage("Almost there..."), 15000)
+    ];
+
+    try {
+      const response = await fetch("http://localhost:3001/api/autogen-prompt");
+      if (!response.ok) throw new Error("Failed to generate surprise soundscape");
+  
+      const data = await response.json();
+      console.log(" Auto keywords:", data.keywords);
+      console.log(" Auto sounds:", data.sounds);
+  
+      if (data?.sounds?.length) {
+        const extractedSounds = data.sounds.map((sound: any) => sound.preview_url);
+        const soundNames = data.sounds.map((sound: any) => sound.name);
+        const generatedTitle = generateTitleFromKeywords(data.keywords || []);
+  
+        const soundsParam = encodeURIComponent(JSON.stringify(extractedSounds));
+        const namesParam = encodeURIComponent(JSON.stringify(soundNames));
+        const titleParam = encodeURIComponent(generatedTitle);
+  
+        router.push(`/mixer?sounds=${soundsParam}&names=${namesParam}&title=${titleParam}`);
+      } else {
+        setInputError({
+          message: "No sounds returned from Auto gen. Please try again.",
+          suggestions: []
+        });
+      }
+    } catch (error) {
+      console.error("Surprise Me error:", error);
+      setInputError({
+        message: "Something went wrong. Try again.",
+        suggestions: []
+      });
+    } finally {
+      msgTimeouts.forEach(clearTimeout); // Clear all timers
+      setIsAutogenerating(false);
+      setAutogenMessage(""); 
+    }
+  }  
   // Filter sounds is not used for the main soundscapes - filtering is done on server side now
   // But we keep this for other parts of the UI that might need client-side filtering
   const filteredSounds = homepageSounds.filter(sound => {
@@ -290,33 +347,59 @@ function HomeContent() {
           soundscapes by  simply describing what you want to <br /> hear.
         </p>
       </div>
-
-      <div className="search-box">
-        <input
-          type="text"
-          value={inputString}
-          onChange={(e) => setInputString(e.target.value)}
-          placeholder="Describe a soundscape to generate (e.g., rainy forest, busy cafe)"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && inputString.trim()) {
-              handleSubmit(e as any);
-            }
-          }}
-        />
-        <button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? (
-            <div className="spinner" style={{ width: '20px', height: '20px', margin: '0' }}></div>
+      
+      <div className="searchAndButtonWrapper">
+      <div style={{ width: '110px' }}></div> {/* spacer */}
+        <div className="search-box">
+          <input
+            type="text"
+            value={inputString}
+            onChange={(e) => setInputString(e.target.value)}
+            placeholder="Describe a soundscape to generate (e.g., rainy forest, busy cafe)"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && inputString.trim()) {
+                handleSubmit(e as any);
+              }
+            }}
+          />
+          <button onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? (
+              <div className="spinner" style={{ width: '20px', height: '20px', margin: '0' }}></div>
+            ) : (
+              <svg id="Search--Streamline-Carbon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="24" width="24">
+                <desc>Search Streamline Icon: https://streamlinehq.com</desc>
+                <defs></defs>
+                <path d="m21.75 20.689425 -5.664075 -5.664075a8.263275 8.263275 0 1 0 -1.060575 1.060575L20.689425 21.75ZM3 9.75a6.75 6.75 0 1 1 6.75 6.75 6.7575 6.7575 0 0 1 -6.75 -6.75Z" fill="#f4671f" strokeWidth="0.75"></path>
+                <path id="_Transparent_Rectangle_" d="M0 0h24v24H0Z" fill="none" strokeWidth="0.75"></path>
+              </svg>
+            )}
+          </button>
+        </div>
+        
+        {/* Auto-generate Button */}
+        <button
+          onClick={handleAutogen}
+          disabled={isAutogenerating}
+          className="autogenPill"
+        >
+          {isAutogenerating ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div className="button-spinner" />
+              {autogenMessage && (
+                <span className="autogen-message">
+                  {autogenMessage}
+                  <span className="dots">
+                    <span>.</span><span>.</span><span>.</span>
+                  </span>
+                </span>
+              )}
+            </div>
           ) : (
-            <svg id="Search--Streamline-Carbon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="24" width="24">
-              <desc>Search Streamline Icon: https://streamlinehq.com</desc>
-              <defs></defs>
-              <path d="m21.75 20.689425 -5.664075 -5.664075a8.263275 8.263275 0 1 0 -1.060575 1.060575L20.689425 21.75ZM3 9.75a6.75 6.75 0 1 1 6.75 6.75 6.7575 6.7575 0 0 1 -6.75 -6.75Z" fill="#f4671f" strokeWidth="0.75"></path>
-              <path id="_Transparent_Rectangle_" d="M0 0h24v24H0Z" fill="none" strokeWidth="0.75"></path>
-            </svg>
+            <strong>Auto-generate</strong>
           )}
         </button>
       </div>
-      
+    
       {/* Error message display */}
       {inputError && (
         <div className="error-container">

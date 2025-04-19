@@ -1,8 +1,8 @@
 .chatbot-container {
-  position: fixed;
+  position: fixed; /* Keeps chatbot button fixed relative to viewport */
   bottom: 20px;
   right: 20px;
-  z-index: 1000;
+  z-index: 1000; /* Ensures button is above most other elements */
 }
 
 .chatbot-button {
@@ -25,17 +25,17 @@
 }
 
 .chatbot-window {
-  position: absolute;
-  bottom: 80px;
+  position: absolute; /* Position relative to the chatbot-container */
+  bottom: 80px; /* Position above the button */
   right: 0;
   width: 350px;
   height: 500px;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2); /* Softer shadow for the window */
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden; /* Ensures content stays within rounded corners */
 }
 
 .chatbot-header {
@@ -64,9 +64,9 @@
 }
 
 .chatbot-messages {
-  flex: 1;
+  flex: 1; /* Allows this section to grow and fill available space */
   padding: 15px;
-  overflow-y: auto;
+  overflow-y: auto; /* Enable vertical scrolling for messages */
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -83,26 +83,26 @@
 .message.user {
   background: var(--Gradient);
   color: white;
-  align-self: flex-end;
-  border-bottom-right-radius: 4px;
+  align-self: flex-end; /* Align user messages to the right */
+  border-bottom-right-radius: 4px; /* Slightly different radius for chat bubble effect */
 }
 
 .message.bot {
   background: #f0f0f0;
   color: #333;
-  align-self: flex-start;
-  border-bottom-left-radius: 4px;
+  align-self: flex-start; /* Align bot messages to the left */
+  border-bottom-left-radius: 4px; /* Slightly different radius for chat bubble effect */
 }
 
 .chatbot-input {
   display: flex;
   padding: 15px;
   gap: 10px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #eee; /* Separator line */
 }
 
 .chatbot-input input {
-  flex: 1;
+  flex: 1; /* Allows input to take up available space */
   padding: 10px 15px;
   border: 1px solid #ddd;
   border-radius: 20px;
@@ -131,7 +131,7 @@
 
 @media (max-width: 480px) {
   .chatbot-window {
-    width: 300px;
+    width: 300px; /* Adjust size for smaller screens */
     height: 400px;
   }
   

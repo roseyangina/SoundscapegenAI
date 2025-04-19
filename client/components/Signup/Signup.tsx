@@ -7,6 +7,7 @@ interface SignupProps {
   setUser: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+// Signup component
 const Signup: React.FC<SignupProps> = ({ setUser }) => {
   const handleGoogleLogin = () => {
     setUser(true);
@@ -20,8 +21,7 @@ const Signup: React.FC<SignupProps> = ({ setUser }) => {
       </div>
       
       <div className="google" onClick={handleGoogleLogin}>
-        {/* <Laugh /> */}
-        Google
+        <img src="/signup.png" alt="signup-logo" />
       </div>
     </div>
   );

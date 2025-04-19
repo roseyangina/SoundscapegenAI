@@ -71,13 +71,15 @@ import React, {
       }
     };
 
-    const scrollToSection = (sectionId) => {
+    // Scroll to a section
+    const scrollToSection = (sectionId: string) => {
       const section = document.getElementById(sectionId);
       if (section) {
         section.scrollIntoView({ behavior: "smooth" });
       }
     };
   
+    // Use a ref to detect clicks outside of the dropdown
     useEffect(() => {
       // Generic Event is enough since we're attaching to document
       function handleClickOutside(event: Event) {
