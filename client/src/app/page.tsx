@@ -286,7 +286,7 @@ function HomeContent() {
     ];
 
     try {
-      const response = await fetch("http://localhost:3001/api/autogen-prompt");
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/autogen-prompt`); // http://localhost:3001/api/autogen-prompt
       if (!response.ok) throw new Error("Failed to generate surprise soundscape");
   
       const data = await response.json();
