@@ -7,7 +7,7 @@ import { getContext } from "tone";
 
 import { AudioTrack, AudioMixexProps } from './types';
 import { SoundscapeResponse, Sound } from '@/app/types/soundscape';
-import { createSoundscape, getDescription, getImage, downloadSound, searchSingleSound, addSoundToSoundscape } from '@/app/services/soundscapeService';
+import { createSoundscape, getImage, downloadSound, searchSingleSound, addSoundToSoundscape } from '@/app/services/soundscapeService';
 
 // We create a cache to store Tone.Player instances keyed by their URL. This is to ensure that each sound loads exactly once
 const playerCache = new Map<string, Tone.Player>();
@@ -71,7 +71,8 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
   readOnly = false,
   trackNames : initialTrackNames = [], // renamed prop
   soundscapeId,
-  imageUrl
+  imageUrl,
+  description
 }) => {
 
   const [tracks, setTracks] = useState<AudioTrack[]>([]);
@@ -91,7 +92,6 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
   const [saveSuccess, setSaveSuccess] = useState<SoundscapeResponse | null>(null);
 
   const [localImageUrl, setLocalImageUrl] = useState<string>(imageUrl || "");
-  const [soundDescription, setDescription] = useState("");
 
   const [play, setPlay] = useState<boolean>(true);
   const [muted, setMuted] = useState<boolean>(false);
@@ -251,10 +251,10 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
     };
   }, [play, tracks])
 
-  useEffect(() => { // Fetch the image and description
+  useEffect(() => { // Fetch the image
     if (!title) return;
 
-    const fetchImageAndDescription = async () => {
+    const fetchImage = async () => {
       // Fetch image if not already set
       if (!localImageUrl && title) {
         try {
@@ -265,16 +265,9 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
         }
       }
 
-      // Fetch description
-      try {
-        const descriptionResult = await getDescription(title);
-        setDescription(descriptionResult);
-      } catch (error) {
-        console.error("Failed to fetch description:", error);
-      }
     };
 
-    fetchImageAndDescription(); // Fetch the image and description
+    fetchImage(); // Fetch the image and 
   }, [title, localImageUrl]);
 
   const formatTimer = (seconds: number) => { // Format the timer
@@ -1121,7 +1114,7 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       <div className='information-wrapper'>
         <div className="information">
           <p className='infor-title'>{title}</p>
-          <p className='infor-description'>{soundDescription}</p>
+          <p className='infor-description'>{description}</p>
           <p className='infor-tags'>Included sound tracks: </p>
           <ul className="infor-sounds-list">
             {tracks.map((track) => {

@@ -21,8 +21,7 @@ const Signup: React.FC<SignupProps> = ({ setUser }) => {
       </div>
       
       <div className="google" onClick={handleGoogleLogin}>
-        {/* <Laugh /> */}
-        Google
+        <img src="/signup.png" alt="signup-logo" />
       </div>
     </div>
   );

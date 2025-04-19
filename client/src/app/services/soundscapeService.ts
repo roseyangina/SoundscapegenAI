@@ -163,7 +163,7 @@ export async function getDescription(inputString: string) {
   });
 
   if (!res.ok) {
-    throw new Error(`HTTP error, status ${res.status}`);
+    throw new Error(`Failed to get track names: HTTP Error Status: ${res.status}`);
   }
 
   const data = await res.json();

@@ -6,7 +6,7 @@ import "./mixer.css";
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getSoundscapeById } from "../services/soundscapeService";
+import { getDescription, getSoundscapeById } from "../services/soundscapeService";
 import Link from "next/link";
 import About from "../../../components/About/About";
 import { Sound } from "../types/soundscape";
@@ -25,6 +25,7 @@ const Mixer = () => {
   const [soundscapeName, setSoundscapeName] = useState<string | null>(null);
   const [title, setTitle] = useState<string | null>(null);
   const [soundscapeId, setSoundscapeId] = useState<string | null>(null);
+  const [soundDescription, setDescription] = useState("");
 
   useEffect(() => {
     const soundsQueryParam = searchParams.get("sounds"); //get sounds from the urls
@@ -43,6 +44,10 @@ const Mixer = () => {
     if (titleParam) {
         setTitle(decodeURIComponent(titleParam));
     }
+
+    // Fetch description
+    const descriptionResult = getDescription(titleParam);
+    setDescription(descriptionResult);
 
     // Otherwise, load from URL parameters as before
     if (soundsQueryParam) {
@@ -101,6 +106,8 @@ const Mixer = () => {
         const names = data.sounds.map(sound => sound.name || `Sound ${sound.sound_id}`);
 
         // Update state with the soundscape data
+        // setTitle(title);
+        // setDescription(soundDescription);
         setSounds(soundPaths);
         setSoundIds(soundIds);
         setSoundVolumes(volumes);
@@ -145,6 +152,7 @@ const Mixer = () => {
                         title={title}
                         trackNames={trackNames}
                         soundscapeId={soundscapeId || undefined}
+                        description={soundDescription}
                     />
                 ) : (
                     <p>Loading sounds...</p>

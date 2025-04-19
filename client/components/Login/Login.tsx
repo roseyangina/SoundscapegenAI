@@ -2,6 +2,8 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import './Login.css';
 
+import Image from "next/image";
+
 interface LoginProps {
   setUser: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -57,8 +59,7 @@ const Login: React.FC<LoginProps> = ({ setUser }) => {
       
       
       <div className="google" onClick={handleGoogleLogin}>
-        {/* <Laugh /> */}
-        Google
+        <img src="/login.png" alt="login-logo" />
       </div>
     </div>
   );
