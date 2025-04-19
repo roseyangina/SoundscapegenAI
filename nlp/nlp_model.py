@@ -25,15 +25,17 @@ def get_keywords(user_text: str, min_keywords: int = 6):
     """
     # First validate if the user input is about sound/soundscapes
     validation_prompt = f"""
-    You are a soundscape validator. Determine if the following input is even remotely about sound or an audio environment.
+    You are a sound-related input validator.. Determine if the following input is even remotely about sound, an audio environment, or if it could reasonably describe or inspire one.
 
     Input: "{user_text}"
 
     Be extremely lenient: Accept vague or short inputs like "river", "library", "give me soundscape for ocean", "sounds of wind", "rain", etc.
-    Assume that if the input mentions a thing, place, or situation, it is asking for sound.
+    Also accept inputs that describe sensory, emotional, or imaginative experiences that could be translated into sound, such as: "floating in space",
+    "dreaming underwater", "being alone in a quiet room", "walking through a forest"
+    Assume that if the input mentions a thing, place, situation, or sensory experience,  it is likely asking for sound.
 
-    Reject only clearly irrelevant inputs like questions unrelated to sound, programming help, math problems, or essays.
-    For example, reject things like: "what is the capital of France", "solve this equation", "write an essay on the Cold War", or "how to code in Python".
+    Reject only clearly irrelevant inputs like questions unrelated to sound, programming help, math problems, essays, or personal facts.  
+    For example, reject inputs like: "what is the capital of France", "solve this equation", "write an essay on the Cold War", "how does photosynthesis work?", "I have two siblings", "1333647##//0", or "how to code in Python".
 
     Respond with ONLY a JSON object with one field:
     {{"is_valid": true}} — if the input could relate to soundscapes or audio environments
@@ -50,6 +52,9 @@ def get_keywords(user_text: str, min_keywords: int = 6):
         )
 
         validation_text = validation_response.choices[0].message.content.strip()
+
+        # debug line 
+        print("VALIDATION RESPONSE FROM MISTRAL:", validation_text)
 
         # Clean up response if it's wrapped in code blocks
         if "```" in validation_text:
@@ -76,8 +81,15 @@ def get_keywords(user_text: str, min_keywords: int = 6):
 
         # Create prompt for keyword extraction
         prompt_str = f"""
-        You are a sound design keyword generator. I will give you a description, and you need to extract 
-        or generate relevant sound effect keywords that could be used to search a sound library.
+        You are a sound design keyword generator. As the keyword intelligence engine, I will give you a a sentence or description that may be short, long, or creatively written about what the user wants to hear. Your task is to identify and focus on noun, verb, or adjective elements that describe **sound-related content**. 
+
+        Understand the **context and intent** behind the input—whether it’s a literal description (e.g., "birds chirping") or an imaginative scene (e.g., "a peaceful morning in the forest"). 
+
+        Identify the specific things that make sounds (e.g., people, animals, environments, weather, instruments, machines) and any **descriptive modifiers** of how they sound (e.g., softly, distant, echoing). 
+
+        Ignore words that do not describe sound directly—such as pronouns, filler phrases, or requests (e.g., “I would like to hear…”).Focus only on what the user is trying to hear or imagine hearing. 
+
+        From this, extract or generate relevant sound effect keywords that could be used to search a sound library.
 
         Description: "{user_text}"
 
@@ -109,6 +121,8 @@ def get_keywords(user_text: str, min_keywords: int = 6):
         try:
             # Parse the response as JSON
             expansions = json.loads(raw_text)
+            # debug *
+            print("Parsed expansions:", expansions)
             if not isinstance(expansions, list):
                 return []
 
@@ -119,6 +133,7 @@ def get_keywords(user_text: str, min_keywords: int = 6):
         except json.JSONDecodeError:
             # Fallback: try to extract keywords from quoted strings if JSON parsing fails
             fallback_keywords = re.findall(r'"([^"]+)"', raw_text)
+            print("Fallback extracted:", fallback_keywords) # debug
             if fallback_keywords and len(fallback_keywords) >= 3:
                 return fallback_keywords[:min_keywords]
             return []
