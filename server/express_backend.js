@@ -251,6 +251,45 @@ app.post('/api/keywords', async (req, res) => {
     }
 });
 
+app.get('/api/autogen-prompt', async (req, res) => {
+  console.log(" Receiving GET request to /autogen-prompt");
+
+  try {
+      // Fetching from backend
+      console.log("no cache: Fetching from Python /api/auto-keywords");
+      const response = await fetch("http://soundscape-python:3002/api/auto-keywords");
+
+      const jsonResponse = await response.json();
+
+      if (!response.ok || !jsonResponse.success) {
+          console.error(" Unsuccessful response");
+          return res.status(400).json({
+              success: false,
+              message: jsonResponse.message || "Failed to generate soundscape."
+          });
+      }
+
+      // Log sound URLs (optional for debugging)
+      if (jsonResponse.sounds) {
+          jsonResponse.sounds.forEach((sound, i) =>
+              console.log(`Sound ${i + 1}:`, sound.preview_url)
+          );
+      }
+
+      // No caching every call is unique
+
+      // Propagate to frontend
+      return res.status(200).json(jsonResponse);
+
+  } catch (error) {
+      console.error("Error in /api/autogen-prompt:", error);
+      return res.status(500).json({
+          success: false,
+          message: "Server error while generating surprise soundscape."
+      });
+  }
+});
+
 // Add track names endpoint
 app.post('/api/track-names', async (req, res) => {
     console.log("Receiving POST request to /track-names endpoint");
@@ -469,7 +508,7 @@ app.get('/api/sounds', async (req, res) => {
 
 // Create a new soundscape
 app.post('/api/soundscapes', async (req, res) => {
-    const { name, description, user_id, sound_ids } = req.body;
+    const { name, description, user_id, sound_ids, image_url } = req.body; // added to accept image
     
     if (!name || !sound_ids || !Array.isArray(sound_ids)) { // If the name or sound_ids are not provided, print an error message
         return res.status(400).json({
@@ -503,8 +542,8 @@ app.post('/api/soundscapes', async (req, res) => {
             // Create a new soundscape, ensuring we don't conflict with existing IDs
             try {
                 const soundscapeResult = await db.query(
-                    'INSERT INTO "Soundscape" (name, description, user_id) VALUES ($1, $2, $3) RETURNING *',
-                    [name, description || '', user_id || null]
+                    'INSERT INTO "Soundscape" (name, description, user_id, image_url) VALUES ($1, $2, $3, $4) RETURNING *',
+                    [name, description || '', user_id || null, image_url || null]
                 );
                 soundscape = soundscapeResult.rows[0];
             } catch (insertError) { // If there is an error, print an error message
@@ -525,8 +564,8 @@ app.post('/api/soundscapes', async (req, res) => {
                     
                     // Try insert again
                     const soundscapeResult = await db.query(
-                        'INSERT INTO "Soundscape" (name, description, user_id) VALUES ($1, $2, $3) RETURNING *',
-                        [name, description || '', user_id || null]
+                        'INSERT INTO "Soundscape" (name, description, user_id, image_url) VALUES ($1, $2, $3, $4) RETURNING *',
+                        [name, description || '', user_id || null, image_url || null]
                     );
                     soundscape = soundscapeResult.rows[0];
                 } else { // If there is an error, print an error message
@@ -1084,6 +1123,7 @@ app.listen(port, () => {
 // Updated: Add description end point
 app.post('/api/description', async (req, res) => {
     const { str } = req.body;
+    console.log("[/api/description] Received str:", str); // debug log
     if (!str) {
       return res.status(400).json({ success: false, message: "Missing 'str' parameter" });
     }

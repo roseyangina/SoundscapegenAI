@@ -622,7 +622,8 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
       const result = await createSoundscape(
         soundscapeName,
         soundscapeDescription,
-        soundsWithSettings
+        soundsWithSettings,
+        localImageUrl // added for image persistence *
       );
       
       console.log('Soundscape saved successfully:', result);

@@ -62,9 +62,10 @@ code {
 .search-box {
   display: flex;
   align-items: center;
-  width: 700px;
+  width: 700px; 
   margin: 30px auto; /* Center the search box */
   height: 60px;
+  z-index: 1;
   padding: 0 8px; /* Padding left/right */
   gap: 8px; /* Space between input and button */
   border-radius: 30px; /* Rounded corners for pill shape */
@@ -458,4 +459,94 @@ h2 {
   opacity: 0.7; /* Make it look faded */
   cursor: not-allowed; /* Indicate non-interactive */
   transform: none; /* Disable hover transform */
+}
+
+/*Autogen button styles */
+.searchAndButtonWrapper {
+  position: relative;
+  width: fit-content;
+  gap: 1px;
+  margin: 30px auto;
+  display: flex;
+  align-items: center;
+}
+
+.autogenPill {
+  height: 60px;
+  width: 160px; 
+  margin-left: -100px; 
+  transform: translateX(100%); 
+  z-index: 2;
+  color: #FFF;
+  text-align: center;
+  font-family: "Inria Sans";
+  font-size: 18px;
+  font-weight: 600;
+  background: var(--Gradient);
+  padding: 8px 24px;
+  border-radius: 29px;
+  border: 2px solid #F4671F;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  transition: background 0.2s ease;
+}
+
+.autogenPill,
+.search-box button {
+  box-sizing: border-box;
+}
+
+.autogenPill:hover {
+  background: linear-gradient(90deg, #ff7e5f, #feb47b);
+}
+
+.autogen-message {
+  font-style: italic;
+  color:  #000000; 
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+.dots span {
+  animation: blink 1.2s infinite;
+  opacity: 0;
+}
+
+.dots span:nth-child(1) {
+  animation-delay: 0s;
+}
+.dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.autogenPill:disabled {
+  background: #ccc;
+  border-color: #ccc;
+  cursor: not-allowed;
+}
+
+.button-spinner {
+  border: 2px solid rgba(244, 103, 31, 0.3); /* Light orange border */
+  border-top: 2px solid #f4671f; /* Bold orange top for spinning effect */
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
