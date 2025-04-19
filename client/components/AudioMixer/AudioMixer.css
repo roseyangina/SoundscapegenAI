@@ -273,7 +273,7 @@
 
  /* Section for audio mixer */
  .mixer {
-    width: 800px;
+    width: auto;
     height: auto;
     background: linear-gradient(6deg, #979797 11.24%, #BCBCBC 49.54%, #8E8E8E 95.61%);
     /* Neumorphic shadow for the main mixer body */
@@ -290,7 +290,7 @@
     display: flex;
     align-items: center;
     gap: 40px; 
-    width: 100%;
+    width: auto;
     height: 77px;
     border-radius: 2px;
     background: linear-gradient(6deg, #979797 11.24%, #BCBCBC 49.54%, #8E8E8E 95.61%);
@@ -359,6 +359,7 @@
 .mixer-channels-container {
     display: flex;
     flex-direction: row;
+    background: linear-gradient(135deg, #989898 100%, #8A8A8A 0%);
 }
 
 /* Individual channel strip */

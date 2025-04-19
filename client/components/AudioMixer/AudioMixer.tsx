@@ -949,10 +949,6 @@ const AudioMixer: React.FC<AudioMixexProps> = ({
               <p className="mix-title"> MIX </p>
             </div>
           </div>
-
-          <div className="display-text">
-            <p>Main</p>
-          </div>
         </div>
 
         <div className="mixer-channels-container">            
