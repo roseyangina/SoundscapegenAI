@@ -119,7 +119,7 @@ import React, {
             </ul>
           </nav>
   
-          {user ? (
+          {/*{user ? (
             <div
               className="user-info"
               ref={dropdownRef}
@@ -148,12 +148,12 @@ import React, {
                   <div className="register">Register</div>
                 </li>
               </ul>
-            </nav>
-          )}
-        </header>
+            </nav> 
+          )} */}
+        </header> 
   
         {/* Screen for Login/Signup overlay */}
-        {screen && (
+        {/*{screen && (
           <div className="screenOverlay" onClick={closeScreen}>
             <div
               className="content"
@@ -169,7 +169,8 @@ import React, {
               </button>
             </div>
           </div>
-        )}
+        )} 
+        */}
       </>
     );
   };

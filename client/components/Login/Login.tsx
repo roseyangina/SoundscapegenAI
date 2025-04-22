@@ -52,19 +52,8 @@ const Login: React.FC<LoginProps> = ({ setUser }) => {
     }
   };
 
-  return (
-    <div className="container">
-      <div className="header">
-        <div className="text">Log In:</div>
-        <div className="underline"></div>
-      </div>
-      
-      
-      <div className="google" onClick={handleGoogleLogin}>
-        <img src="/login.png" alt="login-logo" />
-      </div>
-    </div>
-  );
+  return null;
+ 
 };
 
 export default Login;

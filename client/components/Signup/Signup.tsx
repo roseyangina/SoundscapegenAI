@@ -13,18 +13,7 @@ const Signup: React.FC<SignupProps> = ({ setUser }) => {
     setUser(true);
   };
 
-  return (
-    <div className="container">
-      <div className="header">
-        <div className="text">Create an Account:</div>
-        <div className="underline"></div>
-      </div>
-      
-      <div className="google" onClick={handleGoogleLogin}>
-        <img src="/signup.png" alt="signup-logo" />
-      </div>
-    </div>
-  );
+  return null;
 };
 
 export default Signup;
