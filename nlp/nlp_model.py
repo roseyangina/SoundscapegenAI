@@ -313,28 +313,24 @@ def auto_generate_keywords(min_keywords: int = 6):
         "campfire", "jungle", "ocean waves", "countryside", "windy meadow",
         "cave echoes", "library silence", "snowy landscape", "underwater",
         "bustling marketplace", "summer night",
-        "lo-fi","cinematic", "upbeat", "classical", "ambient",
-        "angelic", "serene", "uplifting", "forest sounds",
+        "lo-fi", "jazzy", "cinematic", "upbeat", "classical", "ambient", "angelic", "serene", "uplifting", "forest sounds",
         "sunset vibes", "midnight jazz"
     ]
 
-    scene_type = random.choice(["ambient", "musical"])
-    if scene_type == "ambient":
-        selected_style = random.choice(ambient_scenes)
-    else:
-        selected_style = random.choice(musical_styles)
+    selected_style = random.choice(styles)
+
     prompt_str = f"""
     You are a creative sound designer. The selected style is "{selected_style}".
 
     Generate exactly {min_keywords} sound-relevant keywords that match or are inspired by this style.
-    These will be used to search a sound database, so focus on creativity, environmental elements, ambient textures, and natural or everyday sounds. 
+    These will be used to search a sound database, so be descriptive and creative. 
 
-    Avoid repeating the style name in every keyword. Think of instruments, moods, textures, ambiences, or audio scenes that fit.
+    Avoid repeating the style name in every keyword. Think of moods, textures, ambiences, or audiotory experiences that fit.
 
     Return ONLY a JSON array of strings.
     Important: Return ONLY the JSON array, no other text or explanation.
     For example:
-    ["leaves rustling", "distant thunder", "chirping crickets", "soft breeze", "rain on roof", "forest footsteps"]
+    ["vinyl crackle", "smooth saxophone", "cafe chatter", "soft rain", "bass groove", "city night ambience"]
     """.strip()
 
     try:
