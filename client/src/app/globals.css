@@ -643,7 +643,7 @@ h2 {
   }
 
   .category-title {
-    font-size: 12px;
+    font-size: 13px;
     margin-bottom: 10px;
   }
 
@@ -651,7 +651,14 @@ h2 {
     width: 70%;
     padding: 10px;
   }
-
+  .chosen-default {
+    font-size: 13px;               /* Reduce font size */
+    padding: 6px 12px;             /* Slightly smaller pill */
+    text-align: center;
+    margin: 0 auto;                /* Center the pill */
+    display: inline-block;
+  }
+  
   .category-tracks {
     display: flex;
     flex-direction: column;
@@ -665,7 +672,7 @@ h2 {
     flex-wrap: wrap;
     justify-content: flex-start;
     gap: 10px;
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .tracks {

@@ -89,11 +89,12 @@ button.nav-btn:hover {
     header {
         display: flex;
         flex-direction: row;
-        align-items: center;
+        align-items: flex-end;     /* Right-align nav links */
+        /*align-items: center; */
         justify-content: space-between;
         padding: 10px 0; /* Remove side padding */
         width: 100%;
-      }
+    }
     
     .left-section {
     display: block;  /* Show logo on mobile */
@@ -104,22 +105,25 @@ button.nav-btn:hover {
     }
 
     .navLinks {
+      width: 100%; 
       display:flex;
-      justify-content: center; 
-      flex: 1;
+      justify-content: flex-end;
+      /*justify-content: center; 
+      flex: 1; */
     }
   
     .navLinks ul {
       display: flex;             
-      flex-direction: row;        /* Horizontal layout */
-      align-items: center;    
+      flex-direction: column; /*vertical*/
+      align-items: flex-end;    
       gap: 8px;
-      padding: 10px 0;
-      flex-wrap: wrap; 
+      padding-right: 20px;
+     /* padding: 10px 0;
+      flex-wrap: wrap;  */
     }
   
     .nav-btn {
-      font-size: 10px;         /* shrink font on smaller screens */
+      font-size: 12px;         /* shrink font on smaller screens */
     }
 }
 
