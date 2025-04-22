@@ -623,7 +623,7 @@ h2 {
 
   .popular-container {
     display: flex;
-    flex-direction: row;        /* 🔁 Stack left & right panels */
+    flex-direction: row;        /*  Stack left & right panels */
     gap: 12px;
     width: 100%;
     justify-content: flex-start; 
