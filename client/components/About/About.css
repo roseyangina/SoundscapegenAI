@@ -19,9 +19,10 @@
 }
 
 /* Style for subheadings */
-h5 {
-    font-size: 1.3rem;
-}
+.contact h5 {
+    text-align: center;
+    margin-bottom: 10px;    /* spacing below */
+  }
 
 .about-information {
     display: flex;
@@ -159,7 +160,3 @@ footer {
     color: #868686; /* Grey text color */
 }
 
-.contact h5 {
-    text-align: center;
-  }
-  

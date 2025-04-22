@@ -50,7 +50,7 @@ nav {
     padding: 0px 30px; /* Spacing between nav items */
 }
 
-.nav-btn {
+button.nav-btn {
     all: unset; 
     transition: all 0.3s ease 0s; /* Smooth transition for hover effects */
     font-family: Inria Sans;
@@ -61,7 +61,7 @@ nav {
     background: transparent;
 }
 
-.nav-btn:hover {
+button.nav-btn:hover {
     padding: 8px; /* Add padding on hover */
     border: none; /* Prevent black border */
     border-radius: 24px; /* Round corners on hover */
@@ -69,6 +69,7 @@ nav {
     background: var(--Gradient); /* Use gradient variable for background */
     transition: all 0.3s ease 0s;
     cursor: pointer;
+    border: none;
 }
 
 .profile {
