@@ -628,7 +628,11 @@ h2 {
     width: 100%;
     justify-content: flex-start; 
   }
-
+  .left-panel,
+  .right-panel {
+    box-sizing: border-box;
+  }
+  
   .left-panel {
     width: 25%;
     display: flex;
