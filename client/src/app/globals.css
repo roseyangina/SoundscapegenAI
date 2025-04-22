@@ -550,3 +550,66 @@ h2 {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+@media (max-width: 768px) {
+  .introduction {
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 10px;
+    gap: 10px;
+  }
+
+  .sound-icon {
+    width: 60px;
+    height: auto;
+    margin-bottom: 10px;
+  }
+
+  .description {
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: center;
+    word-break: break-word;     /* Ensures long words wrap */
+    max-width: 100%;            /* Prevents overflow */
+  }
+
+  .searchAndButtonWrapper {
+    flex-direction: column;    /* Stack search + button vertically */
+    align-items: center;
+    gap: 15px;
+    padding: 0 10px;
+    max-width: 100%;           /* Prevent layout from overflowing */
+  }
+
+  /* Hide the spacer div */
+  .searchAndButtonWrapper > div:first-child {
+    display: none;
+  }
+
+  .search-box {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .search-box input {
+    width: 70%;
+    font-size: 12px;
+    padding: 10px;
+  }
+
+  .search-box button {
+    width: 32px;
+    height: 32px;
+    margin-right: 6px;
+  }
+
+  .autogenPill {
+    font-size: 11px;
+    padding: 10px 16px;
+    width: auto;
+    max-width: 80%;
+  }
+}

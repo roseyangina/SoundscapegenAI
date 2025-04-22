@@ -86,6 +86,18 @@ button.nav-btn:hover {
 }
 
 @media (max-width: 768px) { /*small screens*/
+    header {
+        flex-direction: column;
+        align-items: center;
+        padding: 10px 0; /* Remove side padding */
+        width: 100%;
+      }
+    
+    .left-section,
+    .right-section {
+        display: none;
+      }
+
     .navLinks {
       justify-content: center; 
     }
@@ -98,7 +110,7 @@ button.nav-btn:hover {
     }
   
     .nav-btn {
-      font-size: 16px;         /* shrink font on smaller screens */
+      font-size: 11px;         /* shrink font on smaller screens */
     }
 }
 
