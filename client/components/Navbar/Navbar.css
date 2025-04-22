@@ -95,10 +95,13 @@ button.nav-btn:hover {
         width: 100%;
       }
     
-    .left-section,
+    .left-section {
+    display: block;  /* Show logo on mobile */
+    }
+    
     .right-section {
-        display: none;
-      }
+    display: none;   /* hide right section if empty */
+    }
 
     .navLinks {
       display:flex;
@@ -110,13 +113,13 @@ button.nav-btn:hover {
       display: flex;             
       flex-direction: row;        /* Horizontal layout */
       align-items: center;    
-      gap: 15px;
+      gap: 8px;
       padding: 10px 0;
       flex-wrap: wrap; 
     }
   
     .nav-btn {
-      font-size: 11px;         /* shrink font on smaller screens */
+      font-size: 10px;         /* shrink font on smaller screens */
     }
 }
 

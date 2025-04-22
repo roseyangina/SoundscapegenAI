@@ -631,7 +631,8 @@ h2 {
 
   .left-panel {
     width: 25%;
-    align-items: center;
+    display: flex;
+    align-items: flex-start;
   }
 
   .category-title {
