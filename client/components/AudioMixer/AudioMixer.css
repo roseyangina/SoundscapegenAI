@@ -837,6 +837,7 @@
 }
 
 .func-container button {
+    all: unset;
     background: transparent;
     font-family: Poppins;
     font-size: 14px;
