@@ -62,7 +62,7 @@ button.nav-btn {
     background: transparent;
 }
 
-a.nav-btn, 
+a.nav-btn:hover,
 button.nav-btn:hover {
     padding: 8px; /* Add padding on hover */
     border: none; /* Prevent black border */
