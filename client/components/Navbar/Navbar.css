@@ -50,6 +50,7 @@ nav {
     padding: 0px 30px; /* Spacing between nav items */
 }
 
+a.nav-btn, 
 button.nav-btn {
     all: unset; 
     transition: all 0.3s ease 0s; /* Smooth transition for hover effects */
@@ -61,6 +62,7 @@ button.nav-btn {
     background: transparent;
 }
 
+a.nav-btn, 
 button.nav-btn:hover {
     padding: 8px; /* Add padding on hover */
     border: none; /* Prevent black border */
