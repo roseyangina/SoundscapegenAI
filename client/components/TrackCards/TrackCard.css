@@ -197,4 +197,48 @@
   background: linear-gradient(to bottom, rgba(244, 103, 31, 0.1), rgba(244, 103, 31, 0.3)); /* Semi-transparent theme gradient */
   pointer-events: none; /* Allow clicks to pass through the overlay */
 }
-  
+/*---trackcards..*/
+@media (max-width: 768px) {
+  .track-card {
+    flex-direction: row;      /* Keep image + info side by side */
+    align-items: flex-start; 
+    width: 100%;                    /* ✅ Full width on mobile */
+    margin-left: 0;                 /* ✅ No indent */
+    padding: 15px 10px;
+    gap: 15px;
+  }
+
+  .track-control img {
+    width: 90%;                     /* ✅ Shrink image */
+    height: auto;
+  }
+
+  .info-track {
+    width: 90%;                     /* Shrink info block */
+    align-items: center;
+    text-align: center;
+  }
+
+  .date {
+    align-self: center;             /* No right float on mobile */
+    font-size: 13px;
+  }
+
+  .info-track h3 {
+    font-size: 12px;
+  }
+
+  .track-description {
+    font-size: 10px;
+  }
+
+  .tags {
+    justify-content: center;
+    font-size: 11px;
+  }
+
+  .tag-pill {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+  }
+}

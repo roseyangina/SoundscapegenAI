@@ -87,8 +87,10 @@ button.nav-btn:hover {
 
 @media (max-width: 768px) { /*small screens*/
     header {
-        flex-direction: column;
+        display: flex;
+        flex-direction: row;
         align-items: center;
+        justify-content: space-between;
         padding: 10px 0; /* Remove side padding */
         width: 100%;
       }
@@ -99,14 +101,18 @@ button.nav-btn:hover {
       }
 
     .navLinks {
+      display:flex;
       justify-content: center; 
+      flex: 1;
     }
   
     .navLinks ul {
-      flex-direction: column;
+      display: flex;             
+      flex-direction: row;        /* Horizontal layout */
       align-items: center;    
       gap: 15px;
       padding: 10px 0;
+      flex-wrap: wrap; 
     }
   
     .nav-btn {

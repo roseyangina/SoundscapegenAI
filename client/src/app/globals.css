@@ -615,3 +615,70 @@ h2 {
     max-width: 80%;
   }
 }
+/*popular section-----*/
+@media (max-width: 768px) {
+  .popular {
+    margin: 40px 10px 30px 10px;
+  }
+
+  .popular-container {
+    display: flex;
+    flex-direction: row;        /* 🔁 Stack left & right panels */
+    gap: 12px;
+    width: 100%;
+    justify-content: flex-start; 
+  }
+
+  .left-panel {
+    width: 30%;
+    align-items: center;
+  }
+
+  .category-title {
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+
+  .right-panel {
+    width: 80%;
+  }
+
+  .category-tracks {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .chosenCategory {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    font-size: 12px;
+  }
+
+  .tracks {
+    display: grid;
+    grid-template-columns: 1fr; /* One card per row on mobile */
+    gap: 16px;
+  }
+
+  .chosen-wrapper {
+    display: flex;
+    align-items: center;
+    background-color: #f4f4f4;
+    padding: 6px 10px;
+    border-radius: 12px;
+  }
+
+  .remove-category {
+    margin-left: 6px;
+    font-size: 16px;
+    color: #f4671f;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+}
