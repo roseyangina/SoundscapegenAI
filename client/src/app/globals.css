@@ -553,6 +553,8 @@ h2 {
 
 @media (max-width: 768px) {
   .introduction {
+    display: flex;
+    justify-content: center; 
     text-align: center;
     flex-direction: column;
     align-items: center;

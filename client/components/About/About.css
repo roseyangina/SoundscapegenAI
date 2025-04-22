@@ -161,3 +161,35 @@ footer {
     color: #868686; /* Grey text color */
 }
 
+@media (max-width: 768px) {
+    .about-container {
+      padding: 20px 16px;
+      margin: 0 auto;
+      text-align: center;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  
+    .about-container h2,
+    .about-container h3,
+    .about-container h5 {
+      font-size: 18px; /* smaller for mobile */
+      text-align: center;
+    }
+  
+    .about-container p {
+      font-size: 14px;
+      line-height: 1.6;
+      text-align: center;
+    }
+  
+    .team-grid {
+      padding: 0;
+      gap: 20px;
+    }
+  
+    .team-member h4 {
+      font-size: 14px;
+    }
+  }
+  
