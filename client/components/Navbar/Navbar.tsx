@@ -99,25 +99,21 @@ import React, {
     return (
       <>
         <header className={screen ? 'blurred' : ''}>
-          <Image src="/logo.png" alt="logo" width={144} height={30} />
-  
+          <div className="left-section">
+            <Image src="/logo.png" alt="logo" width={144} height={30} />
+          </div>
+
           <nav className="navLinks">
             <ul>
-              <li> {/* home page is both / and /home */}
-                <Link href="/" className="nav-btn">Home</Link>
-              </li>
-              <li>
-                <button onClick={() => scrollToSection("popular")} className="nav-btn">
-                  Popular
-                </button>
-              </li>
-              <li>
-                <button onClick={() => scrollToSection("about")} className="nav-btn">
-                  About Us
-                </button>
-              </li>
+              <li><Link href="/" className="nav-btn">Home</Link></li>
+              <li><button onClick={() => scrollToSection("popular")} className="nav-btn">Popular</button></li>
+              <li><button onClick={() => scrollToSection("about")} className="nav-btn">About Us</button></li>
             </ul>
           </nav>
+
+          <div className="right-section">{/*left empty */}</div>
+
+
   
           {/*{user ? (
             <div
