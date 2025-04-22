@@ -43,12 +43,14 @@ const About = () => {
       <div className="contact">
         <h5>Contact Us</h5>
         <p>
-          For questions, support, or feedback, reach us att{" "}
+          For questions, support, or feedback, reach us at{" "}
           <a
             href="https://github.com/Soundscapegen/project"
             target="_blank"
             rel="noopener noreferrer"
-          ></a>
+          >
+            link
+          </a>
         </p>
       </div>
     </div>
