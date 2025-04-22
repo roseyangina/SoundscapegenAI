@@ -634,9 +634,12 @@ h2 {
   }
   
   .left-panel {
-    width: 25%;
+    width: 30%;
     display: flex;
+    padding-left: 10px;
     align-items: flex-start;
+    flex-direction: column;
+    padding: 10px;
   }
 
   .category-title {
@@ -645,7 +648,8 @@ h2 {
   }
 
   .right-panel {
-    width: 75%;
+    width: 70%;
+    padding: 10px;
   }
 
   .category-tracks {
@@ -659,7 +663,7 @@ h2 {
   .chosenCategory {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 10px;
     font-size: 12px;
   }
