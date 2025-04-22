@@ -20,7 +20,7 @@ const authService = require('./services/authService');
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cors({
-  origin: ['https://soundscapegen-ai-xef2.vercel.app',
+  origin: ['https://soundscapegen.vercel.app',
            'https://soundscapegen.me' ],         // deployed frontend
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -1112,7 +1112,7 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
   console.log('Environment:', process.env.NODE_ENV || 'development');
-  console.log('CORS enabled for origins:', ['https://soundscapegen-ai-xef2.vercel.app','https://soundscapegen.me']);
+  console.log('CORS enabled for origins:', ['https://soundscapegen.vercel.app','https://soundscapegen.me']);
 }).on('error', (err) => {
   console.error('Server failed to start:', err);
   if (err.code === 'EADDRINUSE') {
